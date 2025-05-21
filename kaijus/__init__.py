@@ -1,0 +1,1 @@
+from kaijus.factoryKaiju import FabricaKaiju
