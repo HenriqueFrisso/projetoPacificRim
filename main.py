@@ -14,6 +14,7 @@ if __name__ == "__main__":
     treino.treinar_pilotos()
     fabrica = FabricaJaeger()
     fabrica.criar_jaeger()
-    fabrica.criar_jaeger()
     repositorio_jaeger = RepositorioJaegers()
-    print(repositorio_jaeger.listar())
+    lista = repositorio_jaeger.listar()
+    for jaeger in lista:
+        print(jaeger.info())
