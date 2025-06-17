@@ -7,26 +7,27 @@ def compatibilidade_personalidade(p1, p2):
 
     pares_bons = {
         (Personalidade.LIDER, Personalidade.ESTRATEGISTA): 20,
-        (Personalidade.CALMO, Personalidade.LIDER): 18,
-        (Personalidade.DETERMINADO, Personalidade.ESTRATEGISTA): 18,
-        (Personalidade.CALMO, Personalidade.IMPULSIVO): 10,
-        (Personalidade.TECNICO, Personalidade.ESTRATEGISTA): 18,
+        (Personalidade.LIDER, Personalidade.TECNICO): 19,
+        (Personalidade.LIDER, Personalidade.CALMO): 18,
+        (Personalidade.ESTRATEGISTA, Personalidade.DETERMINADO): 18,
+        (Personalidade.ESTRATEGISTA, Personalidade.TECNICO): 18,
+        (Personalidade.CALMO, Personalidade.IMPULSIVO): 13,
     }
 
     if p1 == p2:
-        return 10
+        return 15
 
-    return pares_bons.get((p1, p2)) or pares_bons.get((p2, p1)) or 15
+    return pares_bons.get((p1, p2)) or pares_bons.get((p2, p1)) or 10
 
 
 def calcular_score_nacionalidade(p1, p2):
     dist_nac = abs(p1.nacionalidade.value - p2.nacionalidade.value)
-    return max(0, 30 - dist_nac) * 2  # Peso máximo 60
+    return max(0, 30 - dist_nac) * 2
 
 
 def calcular_score_inteligencia(p1, p2):
     media_inteligencia = (p1.inteligencia + p2.inteligencia) / 2
-    return (media_inteligencia / 200) * 10  # Assume inteligência máx 100
+    return (media_inteligencia / 200) * 10
 
 
 def calcular_multiplicador_estado(p1, p2):

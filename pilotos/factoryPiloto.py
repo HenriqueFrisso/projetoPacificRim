@@ -14,14 +14,12 @@ class FabricaPilotos:
 
     def __criar_piloto_aleatorio(self):
         nomes_por_nacionalidade = {
-            # Anglófonos (nomes)
             Nacionalidade.USA: ["Alex", "Jake", "Emily", "Sarah", "John", "Liam"],
             Nacionalidade.UK: ["Arthur", "Charlotte", "Oliver", "Isla", "George"],
             Nacionalidade.AUS: ["Mason", "Zoe", "Cooper", "Chloe", "Hudson"],
             Nacionalidade.CAN: ["Aiden", "Sophie", "Logan", "Emma", "Lucas"],
             Nacionalidade.NZL: ["Finn", "Ruby", "Leo", "Amelia", "Hunter"],
 
-            # Europa Ocidental
             Nacionalidade.GER: ["Hans", "Greta", "Lukas", "Anna", "Karl"],
             Nacionalidade.NLD: ["Daan", "Tess", "Bram", "Sophie", "Luuk"],
             Nacionalidade.SWE: ["Erik", "Lina", "Nils", "Freja", "Oskar"],
@@ -30,16 +28,13 @@ class FabricaPilotos:
             Nacionalidade.ESP: ["Carlos", "Lucia", "Mateo", "Sofia", "Diego"],
             Nacionalidade.POR: ["Tiago", "Beatriz", "João", "Inês", "Rafael"],
 
-            # Países latinos
             Nacionalidade.BRA: ["Henrique", "Ana", "Gabriel", "Camila", "Pedro"],
             Nacionalidade.MEX: ["Luis", "Maria", "Jose", "Valentina", "Diego"],
 
-            # Ásia Oriental
             Nacionalidade.JPN: ["Hiro", "Yuki", "Takashi", "Sakura", "Ren"],
             Nacionalidade.KOR: ["Jin", "Hana", "Minho", "Soo", "Jisoo"],
             Nacionalidade.CHN: ["Wei", "Mei", "Li", "Xiao", "Chen"],
 
-            # Outros
             Nacionalidade.IND: ["Arjun", "Priya", "Rahul", "Ananya", "Ravi"],
             Nacionalidade.RUS: ["Ivan", "Olga", "Dmitri", "Nina", "Yuri"],
             Nacionalidade.IRN: ["Ali", "Zahra", "Reza", "Leila", "Hassan"],
@@ -96,7 +91,6 @@ class FabricaPilotos:
 
     def __escolher_piloto(self, *pilotos):
         while True:
-            # Menu inicial
             escolhas = [piloto.nome for piloto in pilotos] + [Separator(), "Confirmar escolha", "Cancelar"]
             escolha = inquirer.select(
                 message="Selecione um piloto para visualizar ou confirmar sua escolha:",
@@ -112,7 +106,7 @@ class FabricaPilotos:
                     ).execute()
 
                     if sub_escolha == "🔙 Voltar":
-                        break  # Volta para o menu principal
+                        break
                     else:
                         piloto_confirmado = next(p for p in pilotos if p.nome == sub_escolha)
                         print(f"\n✅ Piloto '{piloto_confirmado.nome}' selecionado!")
@@ -125,5 +119,5 @@ class FabricaPilotos:
             else:
                 piloto = next(p for p in pilotos if p.nome == escolha)
                 print(f"\n=== Informações de {piloto.nome} ===")
-                print(piloto.info())  # Certifique-se de que a classe Piloto tenha um método .info()
+                print(piloto.info())
                 input("\nPressione Enter para continuar...")

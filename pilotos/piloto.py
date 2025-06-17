@@ -95,9 +95,9 @@ class Piloto:
 
         self.__personalidade = personalidade
 
-        self.estado = estado  # usa o setter
+        self.estado = estado
         self.__saude = 100
-        self._jaeger = None  # Referência ao Jaeger associado (inicialmente nenhum)
+        self._jaeger = None
 
     @property
     def personalidade(self):
