@@ -3,7 +3,13 @@ from random import uniform, randint, random, choice
 from InquirerPy import inquirer, prompt
 from InquirerPy.separator import Separator
 from functools import wraps
-import questionary
+from datetime import datetime, timedelta
+import time
+import os
+import sys
+
+
+
 
 def singleton(cls):
     instancias = {}
@@ -36,6 +42,25 @@ def registrar_jaeger(func):
         return jaeger
     return wrapper
 
+def registrar_kaiju_derrotado(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        kaiju = func(*args, **kwargs)
+        if not kaiju.ativo:
+            RepositorioKaijusDerrotados.adicionar(kaiju)
+        return kaiju
+    return wrapper
 
 
 
+def limpar_tela():
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+
+from kaijus import *
+from jaegers import *
+from pilotos import *
+from repositorios import *
+import centroOperacoes.historia as historia
+from centroOperacoes.cronometro import Cronometro

@@ -1,14 +1,13 @@
-from InquirerPy import inquirer
-import time
-import os
+from util import *
 
-def limpar_tela():
-    os.system("cls" if os.name == "nt" else "clear")
-
-def narrar(texto, velocidade=1.5):
+def narrar(texto, velocidade=0.03):  # velocidade menor para simular digitação
     for linha in texto.strip().split("\n"):
-        print(linha)
-        time.sleep(velocidade)
+        for caractere in linha:
+            print(caractere, end='', flush=True)
+            time.sleep(velocidade)
+        print()  # nova linha após cada linha de texto
+        time.sleep(velocidade * 10)  # pausa um pouco maior entre as linhas
+    time.sleep(velocidade * 50)
 
 def introducao():
     limpar_tela()
@@ -226,4 +225,95 @@ E venceremos.
     ).execute()
 
 
-final_derrota()
+def desativacao_jaegers():
+    limpar_tela()
+    narrar("""
+Com o passar dos anos, os Kaijus ficaram mais poderosos.
+Os Jaegers, antes invencíveis, começaram a tombar um por um.
+As vitórias deram lugar à dúvida.
+E a confiança da humanidade... começou a ruir.
+    """)
+
+    limpar_tela()
+    narrar("""
+Em meio ao caos, os líderes mundiais tomaram uma decisão drástica:
+Encerrar o Programa Jaeger.
+
+Em seu lugar, ergueriam uma nova linha de defesa:
+A Muralha da Vida — um colosso de concreto e aço, construído ao longo de todo o litoral do Pacífico.
+    """)
+
+    limpar_tela()
+    narrar("""
+Chamaram de solução definitiva.
+
+Mas muitos sabiam que era apenas uma tentativa desesperada de conter o inevitável.
+
+Os Jaegers, nossos maiores símbolos de resistência, foram desativados.
+Deixados para enferrujar em hangares vazios.
+    """)
+
+    limpar_tela()
+    narrar("""
+Pilotos foram dispensados.
+Bases, desativadas.
+O sonho... adormecido.
+
+Mas nas sombras, alguns ainda acreditavam.
+Alguns sabiam... que os Kaijus voltariam.
+    """)
+
+    inquirer.select(
+        message="O Programa Jaeger foi encerrado. O que deseja fazer?",
+        choices=["Continuar", "Sair"],
+        default="Continuar",
+    ).execute()
+
+
+def reativacao_jaegers():
+    limpar_tela()
+    narrar("""
+E então... como previsto, os Kaijus voltaram.
+Mais poderosos. Mais frequentes.
+
+A Muralha da Vida... caiu na primeira onda.
+Milhões pereceram.
+E o mundo, mais uma vez, se viu à beira do colapso.
+    """)
+
+    limpar_tela()
+    narrar("""
+Diante da catástrofe, os líderes não tiveram escolha.
+
+A última base Jaeger — Shatterdome — foi reativada.
+
+Pilotos veteranos foram convocados.
+Novos recrutas começaram o treinamento.
+
+Era hora de lutar novamente.
+    """)
+
+    limpar_tela()
+    narrar("""
+Jaegers esquecidos foram restaurados.
+Peças foram remendadas.
+Tecnologias antigas, revisitadas.
+
+Era tudo o que restava.
+E mesmo assim... havia esperança.
+    """)
+
+    limpar_tela()
+    narrar("""
+Porque não importava o tamanho do monstro...
+...ou a profundidade do medo.
+
+Enquanto existisse um piloto disposto a lutar,
+a humanidade ainda teria chance.
+    """)
+
+    inquirer.select(
+        message="Os Jaegers foram reativados. O que deseja fazer?",
+        choices=["Continuar", "Sair"],
+        default="Continuar",
+    ).execute()

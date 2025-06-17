@@ -1,65 +1,76 @@
 from util import *
+from centroOperacoes.cronometro import Cronometro
 from jaegers.ataques import AtaquesJaeger
 from jaegers.jaeger import Jaeger
 from repositorios.repositorios import RepositorioPilotos  # ajuste o import conforme sua estrutura
-from pilotos.piloto import Piloto  # ajuste se necessário
+from pilotos.piloto import Piloto, EstadoPiloto  # ajuste se necessário
 
 
 def selecionar_pilotos(i):
-    pilotos = []
-    pilotos_disponiveis = RepositorioPilotos.listar()
+    # Filtra pilotos que não têm jaeger e estão ATIVO ou FERIDO
+    pilotos_disponiveis = [
+        p for p in RepositorioPilotos.listar() 
+        if p.jaeger is None and p.estado in (EstadoPiloto.ATIVO, EstadoPiloto.FERIDO)
+    ]
 
     if len(pilotos_disponiveis) < i:
         print(f"Não há pilotos suficientes para criar um Jaeger (mínimo: {i}).")
         return None
 
-    # Usar índice ou ID para diferenciar pilotos com o mesmo nome
-    opcoes_pilotos = [
-        {
-            "name": f"{i}. {p.nome} ({p.nacionalidade})",
-            "value": i
-        }
-        for i, p in enumerate(pilotos_disponiveis)
-    ]
+    # Cria opções de escolha com inteligência ajustada, estado e personalidade
+    opcoes_pilotos = []
+    for idx, p in enumerate(pilotos_disponiveis):
+        inteligencia_efetiva = p.inteligencia
+        if p.estado == EstadoPiloto.FERIDO:
+            inteligencia_efetiva = round(p.inteligencia * (p.saude / 100), 2)
+        
+        opcoes_pilotos.append({
+            "name": (
+                f"{idx}. {p.nome} ({p.nacionalidade})\n"
+                f"   Estado: {p.estado.name} | Inteligência: {inteligencia_efetiva} | "
+                f"Personalidade: {p.personalidade or 'N/A'}"
+            ),
+            "value": idx
+        })
 
     pergunta_checkbox = [
         {
             "type": "checkbox",
             "name": "pilotos",
-            "message": "Selecione dois pilotos:",
+            "message": f"Selecione {i} pilotos:",
             "choices": opcoes_pilotos
         }
     ]
 
     while True:
         resposta = prompt(pergunta_checkbox)
-        selecionados = resposta["pilotos"]
+        selecionados = resposta.get("pilotos", [])
 
         if len(selecionados) != i:
             print(f"Necessário {i} pilotos.\n")
             continue
         break
 
-    # Obter os objetos Piloto com base no índice retornado
-    for j in range(i):
-        pilotos.append(pilotos_disponiveis[selecionados[j]])
-    return pilotos
+    pilotos_selecionados = [pilotos_disponiveis[idx] for idx in selecionados]
+    return pilotos_selecionados
 
 
 class FabricaJaeger:
 
     @registrar_jaeger
     def criar_jaeger(self) -> Jaeger:
-        piloto1, piloto2 = selecionar_pilotos(2)
-        
-        # Pergunta nome do Jaeger
+        pilotos = selecionar_pilotos(2)
+        if pilotos is None:
+            return None
+
+        piloto1, piloto2 = pilotos
+
         nome_pergunta = {
             "type": "input",
             "message": "Digite o nome do Jaeger:",
             "name": "nome"
         }
 
-        # Selecionar ataque
         ataque_pergunta = {
             "type": "fuzzy",
             "message": "Escolha o ataque do Jaeger:",
@@ -72,4 +83,4 @@ class FabricaJaeger:
         nome = respostas_jaeger["nome"]
         ataque = AtaquesJaeger[respostas_jaeger["ataque"]]
 
-        return Jaeger(nome, 100, 100, ataque, piloto1, piloto2)
+        return Jaeger(nome, 100, 100, ataque, piloto1, piloto2, Cronometro().obter_categoria_atual())

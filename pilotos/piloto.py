@@ -74,10 +74,10 @@ class Personalidade(Enum):
         return self.name.capitalize()
 
 class EstadoPiloto(Enum):
-    ATIVO = auto()
-    FERIDO = auto()
-    DESCANSANDO = auto()
-    INATIVO = auto()
+    ATIVO = 0
+    FERIDO = 1
+    DESCANSANDO = 2
+    INATIVO = 3
 
     def __str__(self):
         return self.name.lower()
@@ -97,6 +97,7 @@ class Piloto:
 
         self.estado = estado  # usa o setter
         self.__saude = 100
+        self._jaeger = None  # Referência ao Jaeger associado (inicialmente nenhum)
 
     @property
     def personalidade(self):
@@ -112,6 +113,7 @@ class Piloto:
 
     @estado.setter
     def estado(self, novo_estado):
+        novo_estado = EstadoPiloto(novo_estado) if not isinstance(novo_estado, EstadoPiloto) else novo_estado
         if not isinstance(novo_estado, EstadoPiloto):
             raise ValueError(f"Estado deve ser do tipo EstadoPiloto, recebeu {type(novo_estado)}")
         self.__estado = novo_estado
@@ -138,12 +140,31 @@ class Piloto:
 
     @saude.setter
     def saude(self, valor):
-        if 0 <= valor <= 100:
-            self.__saude = valor
+        self.__saude = valor
+        if self.__saude <= 0:
+            self.__saude = 0
+            self.estado = EstadoPiloto.INATIVO
+        elif self.__saude >= 100:
+            self.__saude = 100
+            self.estado = EstadoPiloto.ATIVO
         else:
-            raise ValueError("Saúde deve estar entre 0 e 100")
+            self.estado = EstadoPiloto.FERIDO
+
+        
+        
+
+    @property
+    def jaeger(self):
+        return self._jaeger
+
+    @jaeger.setter
+    def jaeger(self, novo_jaeger):
+        self._jaeger = novo_jaeger
+
+
 
     def info(self):
+        jaeger_nome = self._jaeger.nome if self._jaeger else "Nenhum"
         return (
             f"Piloto: {self.__nome}\n"
             f"Idade: {self.__idade}\n"
@@ -151,8 +172,9 @@ class Piloto:
             f"Inteligência: {self.__inteligencia}\n"
             f"Personalidade: {self.__personalidade or 'N/A'}\n"
             f"Estado: {self.__estado}\n"
-            f"Saúde: {self.__saude}"
+            f"Saúde: {self.__saude}\n"
+            f"Jaeger: {jaeger_nome}"
         )
 
     def __str__(self):
-        return self.__nome
+        return f"{self.__nome}"

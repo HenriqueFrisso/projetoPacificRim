@@ -1,7 +1,25 @@
 from util import *
 from jaegers.ataques import AtaquesJaeger, ataques_jaeger
+from jaegers.categorias import estrategias_jaeger, CategoriaJaeger
 from pilotos.piloto import Piloto
 from pilotos.conexaoPilotos import calcular_conexao
+
+
+class EstadoJaeger(Enum):
+    ATIVO = 0
+    DANIFICADO = 1
+    REFORMANDO = 2
+    INATIVO = 3
+
+
+cores = {
+    "MARK_I": "\033[94m",   # azul claro
+    "MARK_II": "\033[96m",  # ciano
+    "MARK_III": "\033[92m", # verde
+    "MARK_IV": "\033[93m",  # amarelo
+    "MARK_V": "\033[91m",   # vermelho
+}
+    
 
 # === Classe Jaeger ===
 class Jaeger:
@@ -10,18 +28,30 @@ class Jaeger:
                  durabilidade: int,
                  ataque_assinatura: AtaquesJaeger,
                  piloto1: Piloto,
-                 piloto2: Piloto):
-        
+                 piloto2: Piloto,
+                 categoria: CategoriaJaeger):
+
+        categoria = CategoriaJaeger(categoria)
         self._nome = nome
         self._forca = forca
         self._durabilidade = durabilidade
         self._ataque_assinatura = ataque_assinatura
         self._piloto1 = piloto1
         self._piloto2 = piloto2
+        self._pilotos = [piloto1, piloto2]
+        self._categoria = categoria
+        self._estrategia = estrategias_jaeger[self._categoria]
         self._inteligencia = calcular_conexao(piloto1, piloto2)
-        self._vida = 100
-        self._ativo = True
-    # === Propriedades protegidas ===
+        if categoria in estrategias_jaeger:
+            self._forca, self._durabilidade = estrategias_jaeger[categoria](self)
+
+        self._saude = 100
+        self._estado = EstadoJaeger.ATIVO  # Novo atributo
+
+        self.piloto1.jaeger = self
+        self.piloto2.jaeger = self
+
+    # === Propriedades ===
     @property
     def nome(self): return self._nome
 
@@ -35,49 +65,74 @@ class Jaeger:
     def ataque_assinatura(self): return self._ataque_assinatura
 
     @property
-    def vida(self): return self._vida
+    def saude(self): return self._saude
 
-    @property
-    def ativo(self): return self._ativo
+    @saude.setter
+    def saude(self, nova_saude):
+        self._saude = nova_saude
+        if nova_saude <= 0:
+            self._saude = 0
+            self._estado = EstadoJaeger.INATIVO
+            for piloto in self._pilotos:
+                piloto.jaeger = None
+        elif self._saude >= 100:
+            self._estado = EstadoJaeger.ATIVO
+        else:
+            self._estado = EstadoJaeger.DANIFICADO
 
     @property
     def inteligencia(self): return self._inteligencia
-    
+
     @property
     def piloto1(self): return self._piloto1
-    
+
     @property
     def piloto2(self): return self._piloto2
+
+    @property
+    def categoria(self): return self._categoria
+
+    @property
+    def estado(self): return self._estado
+
+    @estado.setter
+    def estado(self, novo_estado):
+        self._estado = novo_estado
 
     # === Métodos de combate ===
     def atacar(self, alvo):
         _, ataque_func = ataques_jaeger[self._ataque_assinatura]
-        dano = ataque_func(self._forca,self._inteligencia, self, alvo)
+        dano = ataque_func(self._forca, self._inteligencia, self, alvo)
         alvo.atacado(dano)
 
     def atacado(self, dano):
         dano_total = int(dano / (self._durabilidade / 100))
         print(f"Dano: {dano_total}")
-        self._vida -= dano_total
-        if self._vida <= 0:
-            self._vida = 0
-            self._ativo = False
+        self.saude -= dano_total
 
     # === Impressão de informações ===
     def info(self):
+        cor = cores.get(self._categoria.name, "\033[0m")
+        reset = "\033[0m"
+
         return (
-            f"Jaeger: {self._nome}\n"
+            f"Jaeger: {cor}{self._nome}{reset}\n"
+            f"Categoria: {self._categoria.name}\n"
             f"Força: {self._forca}\n"
             f"Durabilidade: {self._durabilidade}\n"
-            f"Inteligencia: {self._inteligencia}\n"
+            f"Inteligência: {self._inteligencia}\n"
             f"Ataque assinatura: {self._ataque_assinatura.name}\n"
-            f"Vida atual: {self._vida}\n"
+            f"Saude atual: {self._saude}\n"
             f"Pilotos: {self._piloto1}, {self._piloto2}\n"
-            f"Ativo: {'Sim' if self._ativo else 'Não'}"
+            f"Estado: {self._estado.name}"
         )
 
     def __str__(self):
-        return self._nome
+        cor = cores.get(self._categoria.name, "\033[0m")
+        reset = "\033[0m"
+        return f"{cor}{self._nome}{reset}"
+    
+
 
 @singleton
 class GipsyDanger(Jaeger):
@@ -88,7 +143,8 @@ class GipsyDanger(Jaeger):
             durabilidade = 150,
             ataque_assinatura = AtaquesJaeger.SOCO_NUCLEAR,
             piloto1 = p1,
-            piloto2 = p2
+            piloto2 = p2,
+            categoria = 3
         )
 
 @singleton
@@ -100,22 +156,28 @@ class CrimsonTyphoon(Jaeger):
             durabilidade = 110,
             ataque_assinatura = AtaquesJaeger.LAMINAS_GIRATORIAS,
             piloto1 = p1,
-            piloto2 = p2
+            piloto2 = p2,
+            categoria = 4
         )
         self._piloto3 = p3
+        self._pilotos = [self.piloto1, self.piloto2, self.piloto3]
         self._inteligencia = calcular_conexao(p1, p2, p3)
     
     @property
     def piloto3(self): return self.__piloto3
 
     def info(self):
+        cor = cores.get(self._categoria.name, "\033[0m")
+        reset = "\033[0m"
+
         return (
-            f"Jaeger: {self._nome}\n"
+            f"Jaeger: {cor}{self._nome}{reset}\n"
+            f"Categoria: {self._categoria.name}\n"
             f"Força: {self._forca}\n"
             f"Durabilidade: {self._durabilidade}\n"
-            f"Inteligencia: {self._inteligencia}\n"
+            f"Inteligência: {self._inteligencia}\n"
             f"Ataque assinatura: {self._ataque_assinatura.name}\n"
-            f"Vida atual: {self._vida}\n"
+            f"Saude atual: {self._saude}\n"
             f"Pilotos: {self._piloto1}, {self._piloto2}, {self._piloto3}\n"
-            f"Ativo: {'Sim' if self._ativo else 'Não'}"
+            f"Estado: {self._estado.name}"
         )

@@ -1,1 +1,1 @@
-from repositorios.repositorios import RepositorioPilotos, RepositorioJaegers
+from repositorios.repositorios import RepositorioPilotos, RepositorioJaegers, RepositorioKaijusDerrotados

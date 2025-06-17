@@ -21,3 +21,14 @@ class RepositorioJaegers:
     @classmethod
     def listar(cls):
         return cls._jaegers_time
+    
+class RepositorioKaijusDerrotados:
+    _kaijus_derrotados = []
+
+    @classmethod
+    def adicionar(cls, kaiju):
+        cls._kaijus_derrotados.append(kaiju)
+
+    @classmethod
+    def listar(cls):
+        return cls._kaijus_derrotados
