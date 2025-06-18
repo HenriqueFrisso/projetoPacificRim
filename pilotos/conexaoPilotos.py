@@ -6,28 +6,28 @@ def compatibilidade_personalidade(p1, p2):
         return 8
 
     pares_bons = {
-        (Personalidade.LIDER, Personalidade.ESTRATEGISTA): 20,
-        (Personalidade.LIDER, Personalidade.TECNICO): 19,
-        (Personalidade.LIDER, Personalidade.CALMO): 18,
-        (Personalidade.ESTRATEGISTA, Personalidade.DETERMINADO): 18,
-        (Personalidade.ESTRATEGISTA, Personalidade.TECNICO): 18,
-        (Personalidade.CALMO, Personalidade.IMPULSIVO): 13,
+        (Personalidade.LIDER, Personalidade.ESTRATEGISTA): 30,
+        (Personalidade.LIDER, Personalidade.TECNICO): 29,
+        (Personalidade.LIDER, Personalidade.CALMO): 28,
+        (Personalidade.ESTRATEGISTA, Personalidade.TECNICO): 27,
+        (Personalidade.ESTRATEGISTA, Personalidade.DETERMINADO): 26,
+        (Personalidade.CALMO, Personalidade.IMPULSIVO): 23,
     }
 
     if p1 == p2:
-        return 15
+        return 20
 
-    return pares_bons.get((p1, p2)) or pares_bons.get((p2, p1)) or 10
+    return pares_bons.get((p1, p2)) or pares_bons.get((p2, p1)) or (abs(abs(p1.value - p2.value) - 20))
 
 
 def calcular_score_nacionalidade(p1, p2):
     dist_nac = abs(p1.nacionalidade.value - p2.nacionalidade.value)
-    return max(0, 30 - dist_nac) * 2
+    return (max(0, 30 - dist_nac) * 2)
 
 
 def calcular_score_inteligencia(p1, p2):
     media_inteligencia = (p1.inteligencia + p2.inteligencia) / 2
-    return (media_inteligencia / 200) * 10
+    return (media_inteligencia / 200) * 100
 
 
 def calcular_multiplicador_estado(p1, p2):
@@ -61,7 +61,7 @@ def calcular_conexao(*pilotos):
             combinacoes += 1
 
     score_final = total / combinacoes
-    return min(100, round(score_final))
+    return round(score_final)
 
 
 

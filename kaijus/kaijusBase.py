@@ -9,7 +9,7 @@ kaijusBase = {
         "durabilidade": 100,
         "inteligencia": 80,
         "agressividade": 80,
-        "ataque_assinatura": AtaquesKaiju.GARRAS
+        "ataque_assinatura": AtaquesKaiju.ACIDO
     },
     "TARANAIS": {
         "categoria": CategoriaKaiju.DESCONHECIDA,
@@ -41,7 +41,7 @@ kaijusBase = {
         "durabilidade": 80,
         "inteligencia": 44,
         "agressividade": 59,
-        "ataque_assinatura": AtaquesKaiju.EXPLOSAO
+        "ataque_assinatura": AtaquesKaiju.GARRAS
     },
     "ITAK": {
         "categoria": CategoriaKaiju.II,
@@ -57,7 +57,7 @@ kaijusBase = {
         "durabilidade": 90,
         "inteligencia": 50,
         "agressividade": 75,
-        "ataque_assinatura": AtaquesKaiju.GARRAS
+        "ataque_assinatura": AtaquesKaiju.ACIDO
     },
     "KNIFEHEAD": {
         "categoria": CategoriaKaiju.III,
@@ -102,7 +102,7 @@ kaijusBase = {
     "OTACHI": {
         "categoria": CategoriaKaiju.IV,
         "forca": 80,
-        "durabilidade": 120,
+        "durabilidade": 160,
         "inteligencia": 70,
         "agressividade": 88,
         "ataque_assinatura": AtaquesKaiju.EXPLOSAO

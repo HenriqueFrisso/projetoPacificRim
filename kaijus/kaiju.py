@@ -3,6 +3,17 @@ from kaijus.categorias import estrategias_kaiju
 from kaijus.ataques import ataques_kaiju
 from util import registrar_kaiju_derrotado
 
+
+
+cores = {
+    "DESCONHECIDA": "\033[90m",  # cinza
+    "I": "\033[92m",             # verde
+    "II": "\033[93m",            # amarelo
+    "III": "\033[33m",           # laranja (amarelo escuro)
+    "IV": "\033[91m",            # vermelho
+    "V": "\033[95m",             # roxo/magenta
+}
+
 # === Classe Kaiju ===
 class Kaiju:
     def __init__(self, nome: str):
@@ -65,7 +76,7 @@ class Kaiju:
     # === Métodos de combate ===
     def atacar(self, alvo):
         _, func_ataque = ataques_kaiju[self._ataque_assinatura]
-        dano = func_ataque(self._forca, self._agressividade, self._inteligencia, self._nome, alvo.nome)
+        dano = func_ataque(self._forca, self._agressividade, self._inteligencia, self, alvo)
         alvo.atacado(dano)
 
     def atacado(self, dano):
@@ -75,8 +86,11 @@ class Kaiju:
 
     # === Impressão de informações ===
     def info(self):
+        cor = cores.get(self._categoria.name, "\033[0m")
+        reset = "\033[0m"
         return (
-            f"Kaiju: {self._nome}\n"
+            f"============================================\n"
+            f"Kaiju: {cor}{self._nome}{reset}\n"
             f"Categoria: {self._categoria.name}\n"
             f"Força: {self._forca}\n"
             f"Durabilidade: {self._durabilidade}\n"
@@ -84,18 +98,12 @@ class Kaiju:
             f"Agressividade: {self._agressividade}\n"
             f"Ataque assinatura: {self._ataque_assinatura.name}\n"
             f"Saude atual: {self._saude}\n"
-            f"Ativo: {'Sim' if self._ativo else 'Não'}"
+            f"Ativo: {'Sim' if self._ativo else 'Não'}\n"
+            f"============================================\n"
         )
 
     def __str__(self):
-        cores = {
-            "DESCONHECIDA": "\033[90m",  # cinza
-            "I": "\033[92m",             # verde
-            "II": "\033[93m",            # amarelo
-            "III": "\033[33m",           # laranja (amarelo escuro)
-            "IV": "\033[91m",            # vermelho
-            "V": "\033[95m",             # roxo/magenta
-        }
+
         cor = cores.get(self._categoria.name, "\033[0m")
         reset = "\033[0m"
         return f"{cor}{self._nome}{reset}"

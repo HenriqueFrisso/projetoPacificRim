@@ -1,0 +1,4 @@
+import centroOperacoes.historia as historia
+from centroOperacoes.cronometro import Cronometro
+from centroOperacoes.centroOperacoes import CentroOperacoes
+from centroOperacoes.batalha import batalha
