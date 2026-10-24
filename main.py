@@ -17,7 +17,7 @@ from pilotos.factoryPiloto import FabricaPilotos
 from pilotos.piloto import selecionar_pilotos
 from repositorios.repositorios import (RepositorioJaegers, RepositorioKaijusDerrotados,
                                        RepositorioPilotos)
-from util import limpar_tela, prompt
+from util import evento_batalha, limpar_tela, prompt
 import dificuldade
 
 ARQUIVO_PRECOS = Path(__file__).with_name("precos.json")
@@ -70,6 +70,9 @@ def escolher_dificuldade():
         ],
     }])["nivel"]
     aplicar_dificuldade(chave)
+
+
+orcamento_atual = None  # campanha em andamento, lida pelo painel da interface gráfica
 
 
 class Orcamento:
@@ -365,20 +368,29 @@ def categoria_ameaca():
 def batalha_por_turnos(jaeger, kaiju):
     """Simula a batalha inteira após o comandante iniciar a missão."""
     turno = 1
+    evento_batalha("inicio", jaeger=jaeger, kaiju=kaiju)
     while jaeger.saude > 0 and kaiju.saude > 0:
         print(f"\n--- TURNO {turno} ---")
         print(f"{jaeger.nome}: {jaeger.saude:3d}% | {kaiju.nome}: {kaiju.saude:3d}%")
         print(f"{jaeger.nome} usa {jaeger.ataque_assinatura.name}!")
+        saude_antes = kaiju.saude
         jaeger.atacar(kaiju)
+        evento_batalha("golpe", atacante="jaeger", ataque=jaeger.ataque_assinatura.name,
+                       dano=saude_antes - kaiju.saude)
         sleep(INTERVALO_ENTRE_GOLPES)
         if kaiju.saude <= 0:
             print(f"\n{kaiju.nome} caiu. A costa está segura.")
+            evento_batalha("fim", vencedor="jaeger")
             return True
         print(f"\n{kaiju.nome} responde com {kaiju.ataque_assinatura.name}!")
+        saude_antes = jaeger.saude
         kaiju.atacar(jaeger)
+        evento_batalha("golpe", atacante="kaiju", ataque=kaiju.ataque_assinatura.name,
+                       dano=saude_antes - jaeger.saude)
         sleep(INTERVALO_ENTRE_GOLPES)
         if jaeger.saude <= 0:
             print(f"\n{jaeger.nome} foi destruído. O Shatterdome perdeu um defensor.")
+            evento_batalha("fim", vencedor="kaiju")
             return False
         turno += 1
 
@@ -451,8 +463,9 @@ def nova_campanha():
 
 def painel():
     """Executa a campanha e retorna a escolha final ("Reiniciar história" ou "Sair")."""
+    global orcamento_atual
     escolher_dificuldade()
-    orcamento = Orcamento()
+    orcamento = orcamento_atual = Orcamento()
     programa_reativado = False
     while True:
         cronometro = Cronometro()

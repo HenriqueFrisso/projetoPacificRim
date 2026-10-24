@@ -1,14 +1,14 @@
 from enum import Enum, IntEnum, auto
 from random import uniform, randint, random, choice
 try:
-    from InquirerPy import inquirer, prompt
+    from InquirerPy import inquirer, prompt as _prompt_terminal
     from InquirerPy.separator import Separator
 except ModuleNotFoundError:
     # Mantém a campanha utilizável em terminais onde a dependência opcional
     # InquirerPy ainda não foi instalada.
     class Separator:
-        def __init__(self, *args, **kwargs):
-            pass
+        def __init__(self, line="", *args, **kwargs):
+            self._line = line
 
     def _escolher(pergunta):
         escolhas = [item for item in pergunta.get("choices", [])
@@ -28,7 +28,7 @@ except ModuleNotFoundError:
             except (ValueError, IndexError):
                 print("Opção inválida.")
 
-    def prompt(perguntas):
+    def _prompt_terminal(perguntas):
         resultado = {}
         for pergunta in perguntas:
             if pergunta.get("type") == "checkbox":
@@ -65,6 +65,26 @@ except ModuleNotFoundError:
         select = _Selecao
 
     inquirer = _Inquirer()
+
+# Quando a interface gráfica está ativa, ela substitui o terminal (gui.py).
+_interface = None
+
+
+def usar_interface(interface):
+    global _interface
+    _interface = interface
+
+
+def evento_batalha(tipo, **dados):
+    """Avisa a interface gráfica para animar a batalha; no terminal não faz nada."""
+    if _interface:
+        _interface.batalha(tipo, **dados)
+
+
+def prompt(perguntas):
+    if _interface:
+        return _interface.prompt(perguntas)
+    return _prompt_terminal(perguntas)
 from functools import wraps
 from datetime import datetime, timedelta
 import time
@@ -117,6 +137,8 @@ def registrar_kaiju_derrotado(func):
 
 
 def limpar_tela():
+    if _interface:
+        return _interface.limpar_tela()
     os.system("cls" if os.name == "nt" else "clear")
 
 

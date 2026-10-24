@@ -54,11 +54,7 @@ A humanidade teve sua primeira vitória.
 Nós havíamos conseguido... e nos acostumamos a vencer.
         """)
 
-    return inquirer.select(
-        message="",
-        choices=["Continuar"],
-        default="Continuar",
-    ).execute()
+    return prompt([{"type": "list", "name": "escolha", "message": "", "choices": ["Continuar"]}])["escolha"]
 
 def final_vitorioso():
     limpar_tela()
@@ -135,11 +131,7 @@ Jaegers não eram apenas máquinas.
 Eram símbolos do que podemos ser quando lutamos juntos.
         """)
 
-    return inquirer.select(
-        message="Fim da jornada. O que deseja fazer?",
-        choices=["Reiniciar história", "Sair"],
-        default="Sair",
-    ).execute()
+    return prompt([{"type": "list", "name": "escolha", "message": "Fim da jornada. O que deseja fazer?", "choices": ["Reiniciar história", "Sair"]}])["escolha"]
 
 def final_derrota():
     limpar_tela()
@@ -218,11 +210,7 @@ Alguém que ainda sonha com o dia em que lutaremos de novo.
 E venceremos.
         """)
 
-    return inquirer.select(
-        message="Fim da humanidade. O que deseja fazer?",
-        choices=["Reiniciar história", "Sair"],
-        default="Sair",
-    ).execute()
+    return prompt([{"type": "list", "name": "escolha", "message": "Fim da humanidade. O que deseja fazer?", "choices": ["Reiniciar história", "Sair"]}])["escolha"]
 
 
 def desativacao_jaegers():
@@ -263,11 +251,7 @@ Mas nas sombras, alguns ainda acreditavam.
 Alguns sabiam... que os Kaijus voltariam.
     """)
 
-    return inquirer.select(
-        message="O Programa Jaeger foi encerrado. O que deseja fazer?",
-        choices=["Continuar", "Sair"],
-        default="Continuar",
-    ).execute()
+    return prompt([{"type": "list", "name": "escolha", "message": "O Programa Jaeger foi encerrado. O que deseja fazer?", "choices": ["Continuar", "Sair"]}])["escolha"]
 
 
 def reativacao_jaegers():
@@ -312,8 +296,4 @@ Enquanto existisse um piloto disposto a lutar,
 a humanidade ainda teria chance.
     """)
 
-    return inquirer.select(
-        message="Os Jaegers foram reativados. O que deseja fazer?",
-        choices=["Continuar", "Sair"],
-        default="Continuar",
-    ).execute()
+    return prompt([{"type": "list", "name": "escolha", "message": "Os Jaegers foram reativados. O que deseja fazer?", "choices": ["Continuar", "Sair"]}])["escolha"]
