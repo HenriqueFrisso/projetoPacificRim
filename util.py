@@ -111,8 +111,9 @@ def registrar_piloto(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         piloto = func(*args, **kwargs)
-        if piloto:
-            RepositorioPilotos.adicionar(piloto)
+        # Uma equipe lendária chega inteira: a fábrica devolve a lista de pilotos.
+        for novo in (piloto if isinstance(piloto, list) else [piloto] if piloto else []):
+            RepositorioPilotos.adicionar(novo)
         return piloto
     return wrapper
 

@@ -1,4 +1,5 @@
 from util import *
+from uuid import uuid4
 
 
 class Nacionalidade(Enum):
@@ -74,6 +75,9 @@ class Personalidade(Enum):
         return self.name.capitalize()
 
 RECUPERACAO_BASE_POR_DIA = 0.4  # pontos de saúde por dia
+XP_POR_NIVEL = 100
+INTELIGENCIA_POR_NIVEL = 4
+INTELIGENCIA_MAXIMA = 130
 
 # Temperamento influencia o repouso: os calmos se recuperam melhor que os impulsivos.
 RECUPERACAO_POR_PERSONALIDADE = {
@@ -112,6 +116,35 @@ class Piloto:
         self.estado = estado
         self.__saude = 100
         self._jaeger = None
+        self.id = uuid4().hex  # nomes podem se repetir; o vínculo usa o id do parceiro
+        self.experiencia = 0
+        self.vinculos = {}  # id do parceiro -> {"nome": ..., "batalhas": ...}
+        self.lendario = False  # tripulação original de um Jaeger do filme
+
+    @property
+    def rotulo(self):
+        """Nome com ★ para os pilotos lendários (saves antigos não têm o atributo)."""
+        return f"★ {self.__nome}" if getattr(self, "lendario", False) else self.__nome
+
+    @property
+    def nivel(self):
+        return 1 + self.experiencia // XP_POR_NIVEL
+
+    def ganhar_experiencia(self, pontos):
+        """Soma experiência; cada nível novo aumenta a inteligência. Retorna os níveis ganhos."""
+        nivel_anterior = self.nivel
+        self.experiencia += pontos
+        niveis = self.nivel - nivel_anterior
+        self.__inteligencia = min(INTELIGENCIA_MAXIMA,
+                                  self.__inteligencia + niveis * INTELIGENCIA_POR_NIVEL)
+        return niveis
+
+    def registrar_batalha(self, tripulacao):
+        """Fortalece o vínculo com cada parceiro que lutou na mesma batalha."""
+        for parceiro in tripulacao:
+            if parceiro is not self:
+                vinculo = self.vinculos.setdefault(parceiro.id, {"nome": parceiro.nome, "batalhas": 0})
+                vinculo["batalhas"] += 1
 
     @property
     def personalidade(self):
@@ -186,8 +219,10 @@ class Piloto:
 
     def info(self):
         jaeger_nome = self._jaeger.nome if self._jaeger else "Nenhum"
+        vinculos = ", ".join(f"{v['nome']} ({v['batalhas']} batalhas)"
+                             for v in self.vinculos.values()) or "nenhum"
         return (
-            f"Piloto: {self.__nome}\n"
+            f"Piloto: {self.rotulo}\n"
             f"Idade: {self.__idade}\n"
             f"Nacionalidade: {self.__nacionalidade or 'N/A'}\n"
             f"Inteligência: {self.__inteligencia}\n"
@@ -195,6 +230,8 @@ class Piloto:
             f"Estado: {self.__estado}\n"
             f"Saúde: {self.__saude}\n"
             f"Recuperação: x{RECUPERACAO_POR_PERSONALIDADE.get(self.__personalidade, 1.0)}\n"
+            f"Nível: {self.nivel} ({self.experiencia % XP_POR_NIVEL}/{XP_POR_NIVEL} XP)\n"
+            f"Vínculos: {vinculos}\n"
             f"Jaeger: {jaeger_nome}"
         )
 
@@ -203,7 +240,8 @@ class Piloto:
 
 
 
-def selecionar_pilotos(i):
+def selecionar_pilotos(i, parceiro=None):
+    """Escolhe i pilotos livres; com uma dupla formada, mostra a ponte neural prevista."""
     # Filtra pilotos que não têm jaeger e estão ATIVO ou FERIDO
     pilotos_disponiveis = [
         p for p in RepositorioPilotos.listar() 
@@ -223,7 +261,7 @@ def selecionar_pilotos(i):
         
         opcoes_pilotos.append({
             "name": (
-                f"{p.nome} ({p.nacionalidade}) | INT {inteligencia_efetiva} | "
+                f"{p.rotulo} ({p.nacionalidade}) | Nv {p.nivel} | INT {inteligencia_efetiva} | "
                 f"{p.personalidade} | {p.estado.name} | Saúde {p.saude}%"
             ),
             "value": p
@@ -245,6 +283,21 @@ def selecionar_pilotos(i):
         if len(selecionados) != i:
             print(f"Necessário {i} pilotos.\n")
             continue
-        break
 
-    return selecionados
+        dupla = selecionados + ([parceiro] if parceiro else [])
+        if len(dupla) != 2:
+            return selecionados
+        # Importado aqui: conexaoPilotos já importa este módulo.
+        from pilotos.conexaoPilotos import calcular_conexao, mostrar_conexao_detalhada
+        mostrar_conexao_detalhada(*dupla)
+        decisao = prompt([{
+            "type": "list", "name": "decisao",
+            "message": f"Ponte neural prevista: {calcular_conexao(*dupla)}. Confirmar a dupla?",
+            "choices": [{"name": "Confirmar dupla", "value": "confirmar"},
+                        {"name": "Escolher outros pilotos", "value": "trocar"},
+                        {"name": "Cancelar", "value": "cancelar"}],
+        }])["decisao"]
+        if decisao == "confirmar":
+            return selecionados
+        if decisao == "cancelar":
+            return None

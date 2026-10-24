@@ -6,17 +6,6 @@ from kaijus.categorias import CategoriaKaiju
 
 class FabricaKaiju:
 
-    # === criar kaiju ===
-    def criarKaiju(cls, nome: str = "KAIJU DESCONHECIDO") -> Kaiju:
-        if nome not in kaijusBase:
-            raise ValueError(f"Kaiju '{nome}' não encontrado na base de dados.")
-        return Kaiju(nome)
-
-    # === criar kaiju aleatório ===
-    def criarKaijuAleatorio(cls) -> Kaiju:
-        nome_aleatorio = choice(list(kaijusBase.keys()))
-        return Kaiju(nome_aleatorio)
-
     # === criar kaiju por categoria ===
     def criarKaijuCategoria(cls, categoria: CategoriaKaiju) -> Kaiju:
         nomes_filtrados = [

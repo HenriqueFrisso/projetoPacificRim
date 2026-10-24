@@ -46,11 +46,29 @@
   },
   "LAMINAS_GIRATORIAS": {
     "nome": "Lâminas Giratórias",
-    "dano_min": 24,
-    "dano_max": 40,
-    "prob_base": 0.7,
-    "bonus": 0.1,
+    "dano_min": 20,
+    "dano_max": 30,
+    "prob_base": 0.68,
+    "bonus": 0.0,
     "descricao": "Arma exclusiva do Crimson Typhoon: dano muito variável com bônus de precisão.",
+    "custo": 0
+  },
+  "PUNHO_TESLA": {
+    "nome": "Punho Tesla",
+    "dano_min": 15,
+    "dano_max": 21,
+    "prob_base": 0.68,
+    "bonus": 0.0,
+    "descricao": "Arma exclusiva do Cherno Alpha: descargas elétricas a cada golpe, muito precisas.",
+    "custo": 0
+  },
+  "LAMINAS_STING": {
+    "nome": "Lâminas Sting",
+    "dano_min": 21,
+    "dano_max": 29,
+    "prob_base": 0.66,
+    "bonus": 0.0,
+    "descricao": "Arma exclusiva do Striker Eureka: lâminas retráteis do Jaeger mais rápido já construído.",
     "custo": 0
   }
 }

@@ -6,6 +6,8 @@ import dificuldade
 
 # === Enum de Ataques Jaeger ===
 class AtaquesJaeger(Enum):
+    LAMINAS_STING = -4 #Striker Eureka
+    PUNHO_TESLA = -3 #Cherno Alpha
     LAMINAS_GIRATORIAS = -2 #Crimson Typhoon
     SOCO_NUCLEAR = -1 #Gipsy Danger
     PUNHO_ENERGIZADO = auto()

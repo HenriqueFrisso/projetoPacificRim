@@ -11,13 +11,13 @@ class CategoriaJaeger(Enum):
 # Estratégias que modificam atributos
 def estrategia_mark_i(jaeger): return int(jaeger._forca), int(jaeger._durabilidade)
 
-def estrategia_mark_ii(jaeger): return (jaeger._forca + 12), (jaeger._durabilidade + 11)
+def estrategia_mark_ii(jaeger): return (jaeger._forca + 15), (jaeger._durabilidade + 15)
 
-def estrategia_mark_iii(jaeger): return (jaeger._forca + 25), (jaeger._durabilidade + 34)
+def estrategia_mark_iii(jaeger): return (jaeger._forca + 35), (jaeger._durabilidade + 42)
 
-def estrategia_mark_iv(jaeger): return (jaeger._forca + 46), (jaeger._durabilidade + 53)
+def estrategia_mark_iv(jaeger): return (jaeger._forca + 68), (jaeger._durabilidade + 88)
 
-def estrategia_mark_v(jaeger): return (jaeger._forca + 58), (jaeger._durabilidade + 78)
+def estrategia_mark_v(jaeger): return (jaeger._forca + 95), (jaeger._durabilidade + 118)
 
 estrategias_jaeger = {
     CategoriaJaeger.MARK_I: estrategia_mark_i,

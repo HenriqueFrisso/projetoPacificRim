@@ -50,13 +50,20 @@ def calcular_multiplicador_estado(p1, p2):
     return multiplicador
 
 
+def calcular_bonus_vinculo(p1, p2):
+    """Duplas que já lutaram juntas sincronizam melhor, até um limite."""
+    configuracao = CONFIGURACAO_CONEXAO["vinculo"]
+    batalhas = p1.vinculos.get(p2.id, {}).get("batalhas", 0)
+    return min(batalhas * configuracao["bonus_por_batalha"], configuracao["bonus_maximo"])
+
+
 def calcular_conexao_individual(p1, p2):
     score_nac = calcular_score_nacionalidade(p1, p2)
     score_pers = compatibilidade_personalidade(p1.personalidade, p2.personalidade)
     score_int = calcular_score_inteligencia(p1, p2)
     estado_mult = calcular_multiplicador_estado(p1, p2)
 
-    return (score_nac + score_pers + score_int) * estado_mult
+    return (score_nac + score_pers + score_int + calcular_bonus_vinculo(p1, p2)) * estado_mult
 
 
 def calcular_conexao(*pilotos):
@@ -89,11 +96,13 @@ def mostrar_conexao_detalhada(*pilotos):
             score_pers = compatibilidade_personalidade(p1.personalidade, p2.personalidade)
             score_int = calcular_score_inteligencia(p1, p2)
             mult_estado = calcular_multiplicador_estado(p1, p2)
-            score_total = (score_nac + score_pers + score_int) * mult_estado
+            score_vinculo = calcular_bonus_vinculo(p1, p2)
+            score_total = (score_nac + score_pers + score_int + score_vinculo) * mult_estado
 
             print(f"\n--- Conexão entre {p1.nome} e {p2.nome} ---")
             print(f"Nacionalidades: {p1.nacionalidade.name} x {p2.nacionalidade.name} -> Score: {score_nac:.1f}")
             print(f"Personalidades: {p1.personalidade.name} x {p2.personalidade.name} -> Score: {score_pers}")
             print(f"Inteligência média: {(p1.inteligencia + p2.inteligencia) / 2:.1f} -> Score: {score_int:.1f}")
+            print(f"Vínculo: {p1.vinculos.get(p2.id, {}).get('batalhas', 0)} batalhas juntos -> Score: {score_vinculo}")
             print(f"Estados: {p1.estado.name} x {p2.estado.name} -> Multiplicador: {mult_estado:.2f}")
             print(f"Score final da conexão: {score_total:.1f}")

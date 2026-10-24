@@ -6,6 +6,9 @@ from pilotos.piloto import Piloto
 from pilotos.conexaoPilotos import calcular_conexao
 
 
+CHANCE_MORTE_PILOTO = 0.1  # por piloto, quando o Jaeger é destruído
+
+
 class EstadoJaeger(Enum):
     ATIVO = 0
     INATIVO = 1
@@ -31,17 +34,17 @@ class Jaeger:
                  ataque_assinatura: AtaquesJaeger,
                  piloto1: Piloto,
                  piloto2: Piloto,
-                 categoria: CategoriaJaeger):
+                 categoria: CategoriaJaeger,
+                 piloto3: Piloto = None):
 
         categoria = CategoriaJaeger(categoria)
         self._nome = nome
         self._forca = forca
         self._durabilidade = durabilidade
         self._ataque_assinatura = ataque_assinatura
-        self._piloto1 = piloto1
-        self._piloto2 = piloto2
-        self._pilotos = [piloto1, piloto2]
-        self._inteligencia = calcular_conexao(piloto1, piloto2)
+        self._pilotos = [p for p in (piloto1, piloto2, piloto3) if p]
+        self._tripulacao = len(self._pilotos)  # 2, ou 3 no Crimson Typhoon
+        self._inteligencia = calcular_conexao(*self._pilotos)
         self._categoria = categoria
         self._estrategia = estrategias_jaeger[self._categoria]
         if categoria in estrategias_jaeger:
@@ -50,8 +53,8 @@ class Jaeger:
         self._saude = 100
         self._estado = EstadoJaeger.ATIVO  # Novo atributo
 
-        self.piloto1.jaeger = self
-        self.piloto2.jaeger = self
+        for piloto in self._pilotos:
+            piloto.jaeger = self
 
     # === Propriedades ===
     @property
@@ -77,7 +80,8 @@ class Jaeger:
             self._estado = EstadoJaeger.DESTRUIDO
             for piloto in self._pilotos:
                 piloto.jaeger = None
-                piloto.saude -= randint(20, 60)
+                # Destruição do Jaeger: chance de morte; senão, ferimento grave.
+                piloto.saude = 0 if random() < CHANCE_MORTE_PILOTO else piloto.saude - randint(20, 60)
         elif self._saude >= 100:
             if self.pilotos == []:
                 self._estado = EstadoJaeger.INATIVO
@@ -100,38 +104,17 @@ class Jaeger:
         self._estado = novo_estado
 
     @property
-    def piloto1(self): return self._piloto1
-
-    @property
-    def piloto2(self): return self._piloto2
-
-    @property
     def pilotos(self): return self._pilotos
-    
+
+    @property
+    def tripulacao_necessaria(self):
+        return getattr(self, "_tripulacao", 2)  # saves antigos não têm o atributo
+
+    @property
+    def tripulacao_completa(self):
+        return len(self._pilotos) >= self.tripulacao_necessaria
+
     # === Métodos de gerenciamento de pilotos ===
-    def remover_pilotos(self):
-        if self._pilotos == []:
-            print("Jaeger não possui pilotos associados a ele.")
-            return
-        self._piloto1.jaeger = None
-        self._piloto2.jaeger = None
-        self._piloto1 = None
-        self._piloto2 = None
-        self._pilotos = []
-        self._inteligencia = 0
-        self.estado = EstadoJaeger.INATIVO
-
-    def adicionar_pilotos(self, piloto1, piloto2):
-        if self.saude == 0:
-            print("Jaeger está destruido e não pode receber novos pilotos.")
-        self._piloto1 = piloto1
-        self._piloto2 = piloto2
-        self._pilotos = [piloto1, piloto2]
-        self._piloto1.jaeger = self
-        self._piloto2.jaeger = self
-        self._inteligencia = calcular_conexao(piloto1, piloto2)
-        self._estado = EstadoJaeger.ATIVO
-
     def remover_piloto(self, piloto):
         """Remove um membro da tripulação e deixa o Jaeger indisponível."""
         if piloto not in self._pilotos:
@@ -139,32 +122,28 @@ class Jaeger:
 
         piloto.jaeger = None
         self._pilotos.remove(piloto)
-        if self._piloto1 is piloto:
-            self._piloto1 = None
-        elif self._piloto2 is piloto:
-            self._piloto2 = None
 
-        # Uma ponte neural exige a dupla completa; sem ela o Jaeger não opera.
+        # A ponte neural exige a tripulação completa; sem ela o Jaeger não opera.
         self._inteligencia = 0
         self._estado = EstadoJaeger.INATIVO
         return True
 
     def adicionar_piloto(self, piloto):
-        """Aloca um substituto; o Jaeger só volta a operar com dois pilotos."""
-        if self.saude <= 0 or piloto.jaeger is not None or len(self._pilotos) >= 2:
+        """Aloca um substituto; o Jaeger só volta a operar com a tripulação completa."""
+        if self.saude <= 0 or piloto.jaeger is not None or self.tripulacao_completa:
             return False
 
         self._pilotos.append(piloto)
         piloto.jaeger = self
-        if self._piloto1 is None:
-            self._piloto1 = piloto
-        else:
-            self._piloto2 = piloto
-
-        if len(self._pilotos) == 2:
-            self._inteligencia = calcular_conexao(self._piloto1, self._piloto2)
+        if self.tripulacao_completa:
+            self._inteligencia = calcular_conexao(*self._pilotos)
             self._estado = EstadoJaeger.ATIVO if self.saude == 100 else EstadoJaeger.DANIFICADO
         return True
+
+    def recalcular_conexao(self):
+        """Atualiza a ponte neural depois que os pilotos evoluem."""
+        if self.tripulacao_completa:
+            self._inteligencia = calcular_conexao(*self._pilotos)
 
     # === Métodos de combate ===
     def atacar(self, alvo):
@@ -204,71 +183,3 @@ class Jaeger:
         cor = cores.get(self._categoria.name, "\033[0m")
         reset = "\033[0m"
         return f"{cor}{self._nome}{reset}"
-    
-
-
-@singleton
-class GipsyDanger(Jaeger):
-    def __init__(self, p1, p2):
-        super().__init__(
-            nome = "Gipsy Danger",
-            forca = 270,
-            durabilidade = 150,
-            ataque_assinatura = AtaquesJaeger.SOCO_NUCLEAR,
-            piloto1 = p1,
-            piloto2 = p2,
-            categoria = 3
-        )
-
-@singleton
-class CrimsonTyphoon(Jaeger):
-    def __init__(self, p1, p2, p3):
-        super().__init__(
-            nome = "Crimson Typhoon",
-            forca = 310,
-            durabilidade = 110,
-            ataque_assinatura = AtaquesJaeger.LAMINAS_GIRATORIAS,
-            piloto1 = p1,
-            piloto2 = p2,
-            categoria = 4
-        )
-        self._piloto3 = p3
-        self._pilotos = [self.piloto1, self.piloto2, self.piloto3]
-        self._inteligencia = calcular_conexao(p1, p2, p3)
-    
-    @property
-    def piloto3(self): return self.__piloto3
-
-    def remover_pilotos(self):
-        super().remover_pilotos()
-        self._piloto3.jaeger = None
-        self._piloto3 = None
-    
-    def adicionar_pilotos(self, piloto1, piloto2, piloto3):
-        super().adicionar_pilotos(piloto1, piloto2)
-        self._piloto3 = piloto3
-        self._pilotos.append(piloto3)
-        self._piloto3.jaeger = self
-        self._inteligencia = calcular_conexao(piloto1, piloto2, piloto3)
-
-    @property
-    def piloto3(self): return self._piloto3
-
-    def info(self):
-        cor = cores.get(self._categoria.name, "\033[0m")
-        reset = "\033[0m"
-        pilotos = ", ".join(
-            f"{piloto.nome} ({piloto.nacionalidade})" for piloto in self._pilotos
-        ) or "Nenhum"
-
-        return (
-            f"Jaeger: {cor}{self._nome}{reset}\n"
-            f"Categoria: {self._categoria.name}\n"
-            f"Força: {self._forca}\n"
-            f"Durabilidade: {self._durabilidade}\n"
-            f"Inteligência: {self._inteligencia}\n"
-            f"Ataque assinatura: {self._ataque_assinatura.name}\n"
-            f"Saude atual: {self._saude}\n"
-            f"Pilotos: {pilotos}\n"
-            f"Estado: {self._estado.name}"
-        )

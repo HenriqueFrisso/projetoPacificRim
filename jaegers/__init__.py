@@ -1,2 +1,1 @@
 from jaegers.factoryJaeger import FabricaJaeger
-from jaegers.jaeger import CrimsonTyphoon

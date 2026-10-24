@@ -22,5 +22,9 @@
   },
   "estado": {
     "multiplicador_por_piloto_nao_ativo": 0.75
+  },
+  "vinculo": {
+    "bonus_por_batalha": 2,
+    "bonus_maximo": 20
   }
 }

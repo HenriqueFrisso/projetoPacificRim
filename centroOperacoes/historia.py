@@ -1,299 +1,232 @@
+import hashlib
+import json
+import select
+import threading
+from pathlib import Path
+
+from audio import tocar
+
+import util
 from util import *
+
+PASTA_NARRACAO = Path(__file__).resolve().parent.parent / "assets" / "narracao"
+ARQUIVO_DURACOES = PASTA_NARRACAO / "duracoes.json"
+
+# Momentos de história, narrados por um piloto veterano. Cada bloco é uma tela e um
+# arquivo de áudio; depois de mudar um texto, rode gerar_narracao.py para refazer a voz.
+NARRACOES = {
+    "prologo": [
+        """Quando eu era criança, achei que fosse um terremoto.
+Mas não era.
+Em 10 de agosto de 2013, algo saiu do fundo do Pacífico.""",
+        """Era uma criatura colossal, coisa de filme de monstro.
+Ela atingiu São Francisco.
+Em seis dias, três cidades tinham sumido do mapa.
+Chamamos aquilo de Kaiju.""",
+        """Achamos que seria o único.
+Estávamos errados.
+Seis meses depois, Manila. Depois, Cabo San Lucas.
+As cidades começaram a cair como dominós.""",
+        """Eles não vinham do espaço.
+Vinham de uma fenda entre dimensões, no fundo do mar.
+Era uma porta. E ela não ia se fechar sozinha.""",
+        """Para enfrentar monstros, nós construímos os nossos.
+Os Jaegers.
+Dois pilotos, uma ponte neural, uma só mente.
+Eu fui um desses pilotos.""",
+        """No começo, nós vencíamos.
+E nos acostumamos a vencer.
+Agora o próximo alerta pode soar a qualquer momento...
+e o comando do Shatterdome é seu.""",
+    ],
+    "desativacao": [
+        """Com os anos, os Kaijus ficaram maiores. Mais rápidos.
+Os Jaegers que pareciam invencíveis começaram a cair.
+Eu vi amigos que nunca voltaram.""",
+        """Os líderes do mundo perderam a fé em nós.
+Encerraram o Programa Jaeger.
+No lugar, ergueram a Muralha da Vida: concreto e aço ao longo de todo o Pacífico.""",
+        """Chamaram de solução definitiva.
+Quem já tinha olhado um Kaiju nos olhos sabia que não era.
+Os Jaegers foram deixados para enferrujar em hangares vazios.""",
+        """Fui dispensado, como tantos outros pilotos.
+Mas alguns de nós continuavam esperando o alarme.
+Porque sabíamos... eles iam voltar.""",
+    ],
+    "reativacao": [
+        """E eles voltaram.
+A Muralha da Vida caiu na primeira onda.
+Milhões morreram em uma única noite.""",
+        """Não havia mais escolha.
+O último Shatterdome foi reaberto.
+Veteranos como eu foram chamados de volta.
+Os recrutas começaram a treinar no mesmo dia.""",
+        """Remendamos Jaegers esquecidos com o que tínhamos.
+Não era muito.
+Mas era o suficiente para lutar mais uma vez.""",
+        """Não importa o tamanho do monstro.
+Enquanto houver um piloto disposto a entrar no Jaeger...
+a humanidade ainda tem uma chance.""",
+    ],
+    "pitfall": [
+        """O relógio do fim do mundo zerou.
+A Fenda está instável demais para esperar.
+Só resta uma saída: descer até o fundo do Pacífico...
+e fechar aquela porta para sempre.""",
+    ],
+    "final_vitorioso": [
+        """A guerra durou anos.
+A cada fase, eles voltavam maiores, mais letais.
+Perdemos Jaegers. Perdemos pilotos.
+Mas nunca recuamos.""",
+        """Então veio a Operação Pitfall.
+Descer até a Fenda e detoná-la por dentro.
+Todos nós sabíamos que podia ser só ida.""",
+        """No fundo do oceano, a escuridão era total.
+O Kaiju que guardava a passagem era o maior que eu já tinha visto.
+Aço contra carne. Cada golpe parecia o último.""",
+        """Quando a bomba disparou, eu ainda estava na ponte neural.
+Senti o oceano inteiro tremer.
+E a Fenda... colapsou.""",
+        """Os sensores ficaram em silêncio.
+Nenhum Kaiju. Nenhum sinal.
+Pela primeira vez em doze anos... silêncio.""",
+        """Nós vencemos.
+Não porque éramos mais fortes.
+Mas porque lutamos juntos.
+Os Jaegers nunca foram só máquinas.""",
+    ],
+    "final_derrota": [
+        """Mandamos tudo o que tínhamos.
+Os últimos Jaegers. Os melhores pilotos.
+Não foi o suficiente.""",
+        """Eles aprenderam.
+Vinham mais fortes, mais rápidos, coordenados...
+como se conhecessem cada movimento nosso.""",
+        """Numa noite, a costa inteira caiu.
+Cidades engolidas em horas.
+Jaegers tombando, um a um.
+E as vozes no rádio... foram se apagando.""",
+        """Depois, só estática.
+Nenhuma vitória. Nenhum herói.
+Só o silêncio do Pacífico.""",
+        """Talvez tenhamos confiado demais nas máquinas.
+Talvez tenhamos subestimado o inimigo.
+Não importa mais.""",
+        """Mas se alguém estiver ouvindo isto...
+em algum abrigo, em alguma ilha esquecida...
+não desista.
+Um dia, nós vamos lutar de novo.""",
+    ],
+}
+
+
+# Ligado pelo botão "Pular" da janela ou por Enter no terminal; contar() desliga ao terminar.
+pular = threading.Event()
+
+
+def _enter_no_terminal():
+    """Checa, sem bloquear, se o jogador apertou Enter no terminal."""
+    try:
+        if os.name == "nt":
+            import msvcrt
+            return msvcrt.kbhit() and msvcrt.getwch() in "\r\n"
+        if sys.stdin.isatty() and select.select([sys.stdin], [], [], 0)[0]:
+            sys.stdin.readline()
+            return True
+    except (OSError, ValueError):
+        pass
+    return False
+
+
+def pulou():
+    if not pular.is_set() and not util._interface and _enter_no_terminal():
+        pular.set()
+    return pular.is_set()
+
+
+def _esperar(segundos):
+    """Dorme em pedacinhos para atender o pulo na hora; devolve True se pulou."""
+    passos = max(1, round(segundos / 0.05))
+    for _ in range(passos):
+        if pulou():
+            return True
+        time.sleep(segundos / passos)
+    return pulou()
+
 
 def narrar(texto, velocidade=0.03):  # velocidade menor para simular digitação
     for linha in texto.strip().split("\n"):
         for caractere in linha:
             print(caractere, end='', flush=True)
-            time.sleep(velocidade)
+            if _esperar(velocidade):
+                print()
+                return
         print()  # nova linha após cada linha de texto
-        time.sleep(velocidade * 10)  # pausa um pouco maior entre as linhas
-    time.sleep(velocidade * 50)
+        if _esperar(velocidade * 10):  # pausa um pouco maior entre as linhas
+            return
+    _esperar(velocidade * 50)
 
-def introducao():
-    limpar_tela()
-    narrar("""
-No começo, pensávamos que fosse um terremoto...
-Mas não era.
-Em 10 de agosto de 2013, algo emergiu do fundo do Oceano Pacífico.
-        """)
 
-    limpar_tela()
-    narrar("""
-Uma criatura colossal — algo que só existia em filmes de monstros — emergiu próximo à costa de São Francisco.
-Chamaram-no de Kaiju.
-Em menos de seis dias, destruiu três cidades e matou dezenas de milhares.
-        """)
+def arquivo_narracao(chave, indice, texto):
+    """O nome leva um resumo do texto: se o texto mudar, o áudio antigo deixa de valer."""
+    resumo = hashlib.sha1(texto.strip().encode("utf-8")).hexdigest()[:8]
+    return PASTA_NARRACAO / f"{chave}_{indice}_{resumo}.mp3"
 
-    limpar_tela()
-    narrar("""
-Pensávamos que era um evento isolado.
-Estávamos errados.
-Seis meses depois, outro Kaiju atacou Manila.
-Depois, Cabo de São Lucas.
-E então, cidades inteiras começaram a cair como dominós.
-        """)
 
-    limpar_tela()
-    narrar("""
-Chamamos esse dia de K-Day.
-E percebemos que os monstros não vinham do espaço... vinham de uma fenda dimensional no fundo do mar.
-        """)
+def duracoes():
+    try:
+        return json.loads(ARQUIVO_DURACOES.read_text(encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        return {}
 
-    limpar_tela()
-    narrar("""
-Para combater monstros, criamos nossos próprios monstros.
-Os Jaegers: robôs gigantes controlados por dois pilotos conectados por uma ponte neural.
-Lutando como se fossem um só corpo, uma só mente.
-        """)
 
-    limpar_tela()
-    narrar("""
-No começo, vencemos.
-O primeiro Jaeger derrotou um Kaiju em menos de 60 segundos.
-A humanidade teve sua primeira vitória.
-Nós havíamos conseguido... e nos acostumamos a vencer.
-        """)
+def contar(chave, velocidade=0.03):
+    """Narra um momento de história: cada bloco numa tela, com a voz do piloto."""
+    tempos = duracoes()
+    pular.clear()
+    if util._interface:
+        util._interface.mostrar_pular(pular.set)
+    else:
+        print("(Enter para pular a história)")
+    try:
+        for indice, texto in enumerate(NARRACOES[chave]):
+            limpar_tela()
+            arquivo = arquivo_narracao(chave, indice, texto)
+            audio = tocar(arquivo)
+            ritmo = velocidade
+            if audio and arquivo.name in tempos:
+                # O texto termina de aparecer junto com a fala (narrar soma pausas por linha).
+                linhas = texto.strip().count("\n") + 1
+                ritmo = tempos[arquivo.name] * 0.9 / (len(texto.strip()) + 10 * linhas + 50)
+            narrar(texto, ritmo)
+            while audio and audio.poll() is None and not _esperar(0.1):
+                pass
+            if pulou():
+                if audio:
+                    audio.terminate()
+                break
+    finally:
+        pular.clear()
+        if util._interface:
+            util._interface.esconder_pular()
 
-    return prompt([{"type": "list", "name": "escolha", "message": "", "choices": ["Continuar"]}])["escolha"]
 
 def final_vitorioso():
-    limpar_tela()
-    narrar("""
-A guerra contra os Kaijus durou anos.
-A cada nova geração, eles voltavam maiores, mais letais, mais inteligentes.
-
-Muitos Jaegers tombaram.
-Muitos pilotos jamais voltaram.
-
-Mas a humanidade... nunca recuou.
-        """)
-
-    limpar_tela()
-    narrar("""
-Lançamos a Operação Pitfall.
-
-O plano: atravessar a Fenda, com dois Jaegers.
-Detonar uma bomba de carga dupla do outro lado.
-Fechá-la para sempre.
-
-Era uma missão suicida.
-Mas sabíamos que era nossa única chance.
-        """)
-
-    limpar_tela()
-    narrar("""
-Os Jaegers Gipsy Danger e Striker Eureka lideraram o ataque.
-
-No fundo do oceano, enfrentaram dois Kaijus de categoria 5 — colossais, como jamais vistos antes.
-
-A batalha foi brutal.
-Corpos de aço contra monstros de carne e fúria.
-        """)
-
-    limpar_tela()
-    narrar("""
-Striker Eureka caiu... mas não em vão.
-
-Gipsy Danger avançou com a bomba em seu núcleo nuclear.
-
-No último instante, o piloto remanescente ativou a sequência de detonação...
-...e se lançou de volta pela fenda com um salto de emergência.
-        """)
-
-    limpar_tela()
-    narrar("""
-A explosão foi tão poderosa que rachou o fundo do mar.
-
-A fenda... colapsou.
-
-O portal... foi selado.
-        """)
-
-    limpar_tela()
-    narrar("""
-Os sensores não detectaram mais atividade.
-
-Nenhum Kaiju. Nenhum sinal dimensional.
-
-Pela primeira vez... silêncio.
-        """)
-
-    limpar_tela()
-    narrar("""
-A humanidade venceu.
-
-Não com armas.
-Não com ódio.
-
-Mas com coragem, sacrifício... e união.
-
-Jaegers não eram apenas máquinas.
-Eram símbolos do que podemos ser quando lutamos juntos.
-        """)
-
+    contar("final_vitorioso")
     return prompt([{"type": "list", "name": "escolha", "message": "Fim da jornada. O que deseja fazer?", "choices": ["Reiniciar história", "Sair"]}])["escolha"]
 
+
 def final_derrota():
-    limpar_tela()
-    narrar("""
-Enviamos tudo o que nos restava.
-
-Os últimos Jaegers.
-Os melhores pilotos.
-A última esperança da humanidade.
-
-Mas... não foi o suficiente.
-        """)
-
-    limpar_tela()
-    narrar("""
-Os Kaijus evoluíram.
-
-Vieram mais fortes.
-Mais rápidos.
-Mais coordenados.
-
-Como se já soubessem cada movimento nosso.
-Como se... esperassem.
-        """)
-
-    limpar_tela()
-    narrar("""
-Na noite mais escura, as defesas da Muralha do Pacífico caíram.
-
-Cidades costeiras foram engolidas em questão de horas.
-
-Jaegers tombaram um a um.
-
-E os pilotos... foram silenciados.
-        """)
-
-    limpar_tela()
-    narrar("""
-Os governos cessaram comunicações.
-
-As estações orbitais pararam de responder.
-
-As últimas transmissões mostravam luzes azuis cobrindo o céu... e gritos.
-        """)
-
-    limpar_tela()
-    narrar("""
-Então, o mundo ficou em silêncio.
-
-Nenhuma vitória.
-Nenhum herói.
-Nenhum final feliz.
-        """)
-
-    limpar_tela()
-    narrar("""
-A raça humana perdeu a guerra.
-
-Não por fraqueza... mas por arrogância.
-Subestimamos o inimigo.
-Confiamos demais nas máquinas.
-
-E agora... somos apenas uma memória.
-        """)
-
-    limpar_tela()
-    narrar("""
-Mas talvez...
-
-Em algum abrigo subterrâneo.
-Em alguma ilha esquecida.
-
-Alguém tenha sobrevivido.
-
-Alguém que ainda sonha com o dia em que lutaremos de novo.
-E venceremos.
-        """)
-
+    contar("final_derrota")
     return prompt([{"type": "list", "name": "escolha", "message": "Fim da humanidade. O que deseja fazer?", "choices": ["Reiniciar história", "Sair"]}])["escolha"]
 
 
 def desativacao_jaegers():
-    limpar_tela()
-    narrar("""
-Com o passar dos anos, os Kaijus ficaram mais poderosos.
-Os Jaegers, antes invencíveis, começaram a tombar um por um.
-As vitórias deram lugar à dúvida.
-E a confiança da humanidade... começou a ruir.
-    """)
-
-    limpar_tela()
-    narrar("""
-Em meio ao caos, os líderes mundiais tomaram uma decisão drástica:
-Encerrar o Programa Jaeger.
-
-Em seu lugar, ergueriam uma nova linha de defesa:
-A Muralha da Vida — um colosso de concreto e aço, construído ao longo de todo o litoral do Pacífico.
-    """)
-
-    limpar_tela()
-    narrar("""
-Chamaram de solução definitiva.
-
-Mas muitos sabiam que era apenas uma tentativa desesperada de conter o inevitável.
-
-Os Jaegers, nossos maiores símbolos de resistência, foram desativados.
-Deixados para enferrujar em hangares vazios.
-    """)
-
-    limpar_tela()
-    narrar("""
-Pilotos foram dispensados.
-Bases, desativadas.
-O sonho... adormecido.
-
-Mas nas sombras, alguns ainda acreditavam.
-Alguns sabiam... que os Kaijus voltariam.
-    """)
-
+    contar("desativacao")
     return prompt([{"type": "list", "name": "escolha", "message": "O Programa Jaeger foi encerrado. O que deseja fazer?", "choices": ["Continuar", "Sair"]}])["escolha"]
 
 
 def reativacao_jaegers():
-    limpar_tela()
-    narrar("""
-E então... como previsto, os Kaijus voltaram.
-Mais poderosos. Mais frequentes.
-
-A Muralha da Vida... caiu na primeira onda.
-Milhões pereceram.
-E o mundo, mais uma vez, se viu à beira do colapso.
-    """)
-
-    limpar_tela()
-    narrar("""
-Diante da catástrofe, os líderes não tiveram escolha.
-
-A última base Jaeger — Shatterdome — foi reativada.
-
-Pilotos veteranos foram convocados.
-Novos recrutas começaram o treinamento.
-
-Era hora de lutar novamente.
-    """)
-
-    limpar_tela()
-    narrar("""
-Jaegers esquecidos foram restaurados.
-Peças foram remendadas.
-Tecnologias antigas, revisitadas.
-
-Era tudo o que restava.
-E mesmo assim... havia esperança.
-    """)
-
-    limpar_tela()
-    narrar("""
-Porque não importava o tamanho do monstro...
-...ou a profundidade do medo.
-
-Enquanto existisse um piloto disposto a lutar,
-a humanidade ainda teria chance.
-    """)
-
+    contar("reativacao")
     return prompt([{"type": "list", "name": "escolha", "message": "Os Jaegers foram reativados. O que deseja fazer?", "choices": ["Continuar", "Sair"]}])["escolha"]

@@ -6,18 +6,23 @@ from pilotos.piloto import Piloto, EstadoPiloto, Nacionalidade, Personalidade
 class FabricaPilotos:
 
     @registrar_piloto
-    def treinar_pilotos(self):
-        p1 = self.__criar_piloto_aleatorio()
-        p2 = self.__criar_piloto_aleatorio()
-        p3 = self.__criar_piloto_aleatorio()
-        piloto = self.__escolher_piloto(p1,p2,p3)
+    def treinar_pilotos(self, equipe_lendaria=None):
+        """equipe_lendaria: (nome do Jaeger, pilotos) oferecida como candidata extra."""
+        p1 = self.criar_piloto_aleatorio()
+        p2 = self.criar_piloto_aleatorio()
+        p3 = self.criar_piloto_aleatorio()
+        piloto = self.__escolher_piloto(p1, p2, p3, equipe_lendaria=equipe_lendaria)
+        if piloto == "lendarios":
+            jaeger, tripulacao = equipe_lendaria
+            print(f"\n★ A tripulação original do {jaeger} se juntou ao programa Jaeger!")
+            return tripulacao  # veteranos: não passam pela reprovação
         if piloto and random() > dificuldade.atual["chance_treinamento"]:
             print(f"⚠️  {piloto.nome} não suportou a ponte neural e foi reprovado no treinamento.")
             return None
         return piloto
 
 
-    def __criar_piloto_aleatorio(self):
+    def criar_piloto_aleatorio(self):
         nomes_por_nacionalidade = {
             Nacionalidade.USA: ["Alex", "Jake", "Emily", "Sarah", "John", "Liam"],
             Nacionalidade.UK: ["Arthur", "Charlotte", "Oliver", "Isla", "George"],
@@ -94,7 +99,7 @@ class FabricaPilotos:
         )
 
 
-    def __escolher_piloto(self, *pilotos):
+    def __escolher_piloto(self, *pilotos, equipe_lendaria=None):
         opcoes = [
             {
                 "name": (f"{piloto.nome} ({piloto.nacionalidade}) | "
@@ -103,6 +108,11 @@ class FabricaPilotos:
             }
             for piloto in pilotos
         ]
+        if equipe_lendaria:
+            jaeger, tripulacao = equipe_lendaria
+            nomes = ", ".join(p.nome for p in tripulacao)
+            opcoes.insert(0, {"name": f"★ LENDAS: {nomes} — tripulação original do {jaeger}",
+                              "value": "lendarios"})
         opcoes.append({"name": "Cancelar recrutamento", "value": None})
         resposta = prompt([{
             "type": "list",
@@ -111,6 +121,8 @@ class FabricaPilotos:
             "choices": opcoes,
         }])
         piloto_confirmado = resposta["piloto"]
+        if piloto_confirmado == "lendarios":
+            return piloto_confirmado
         if piloto_confirmado:
             print(f"\n✅ Piloto '{piloto_confirmado.nome}' selecionado!")
         else:

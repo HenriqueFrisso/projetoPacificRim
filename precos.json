@@ -4,10 +4,10 @@
     "selecao": 250,
     "conclusao": 250
   },
-  "jaeger": 5000,
-  "reparo_por_integridade": 25,
-  "penalidade_derrota": 2000,
-  "recompensa_por_categoria_kaiju": 1750,
+  "jaeger": 4000,
+  "reparo_por_integridade": 15,
+  "penalidade_derrota": 1000,
+  "recompensa_por_categoria_kaiju": 3000,
   "intervalo_entre_golpes_segundos": 0.6,
   "dificuldades": {
     "facil": {
@@ -15,13 +15,15 @@
       "creditos": 1.5,
       "precos": 0.75,
       "recompensa": 1.5,
-      "dano_recebido_jaeger": 0.75,
-      "dano_recebido_kaiju": 1.25,
+      "dano_recebido_jaeger": 0.85,
+      "dano_recebido_kaiju": 1.15,
       "chance_treinamento": 0.95,
       "inteligencia_candidatos": [
         70,
         100
-      ]
+      ],
+      "cidades_toleradas": 9,
+      "ritmo_ataques": 1.2
     },
     "normal": {
       "nome": "Normal",
@@ -34,20 +36,24 @@
       "inteligencia_candidatos": [
         60,
         100
-      ]
+      ],
+      "cidades_toleradas": 8,
+      "ritmo_ataques": 1.0
     },
     "dificil": {
       "nome": "Difícil",
-      "creditos": 0.9,
-      "precos": 1.15,
-      "recompensa": 0.75,
-      "dano_recebido_jaeger": 1.25,
-      "dano_recebido_kaiju": 0.85,
-      "chance_treinamento": 0.6,
+      "creditos": 1.0,
+      "precos": 1.0,
+      "recompensa": 1.0,
+      "dano_recebido_jaeger": 1.05,
+      "dano_recebido_kaiju": 1.0,
+      "chance_treinamento": 0.7,
       "inteligencia_candidatos": [
         50,
         90
-      ]
+      ],
+      "cidades_toleradas": 6,
+      "ritmo_ataques": 0.8
     }
   },
   "geracao_jaeger": {
@@ -56,5 +62,32 @@
     "MARK_III": 2000,
     "MARK_IV": 3500,
     "MARK_V": 5000
+  },
+  "dias_por_acao": {
+    "treinamento": 20,
+    "construcao": 45,
+    "reparo": 10,
+    "batalha": 7
+  },
+  "intervalo_ataques_dias": [
+    200,
+    160,
+    130,
+    100,
+    80
+  ],
+  "experiencia": {
+    "vitoria": 40,
+    "derrota": 15
+  },
+  "eventos": {
+    "chance": 0.5,
+    "doacao_por_fase": 1000,
+    "corte_por_fase": 800,
+    "dano_acidente": 15,
+    "dias_adiantamento": 20,
+    "dias_atraso": 30,
+    "cura_moral": 20,
+    "xp_veterano": 150
   }
 }

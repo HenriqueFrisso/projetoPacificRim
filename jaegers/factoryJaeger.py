@@ -2,6 +2,7 @@ from util import *
 from centroOperacoes.cronometro import Cronometro
 from jaegers.ataques import AtaquesJaeger, custo_arma, descrever_arma
 from jaegers.categorias import CategoriaJaeger, custo_geracao, descrever_geracao
+from jaegers.historicos import JAEGERS_HISTORICOS, tripulacao_original
 from jaegers.jaeger import Jaeger
 from repositorios.repositorios import RepositorioJaegers, RepositorioPilotos
 from pilotos.piloto import selecionar_pilotos  # ajuste se necessário
@@ -20,7 +21,7 @@ SOBRENOMES_JAEGER = [
 
 def sugerir_nome():
     """Combina nome e sobrenome sem repetir um Jaeger já construído."""
-    usados = {jaeger.nome for jaeger in RepositorioJaegers.listar()}
+    usados = {jaeger.nome for jaeger in RepositorioJaegers.listar()} | set(JAEGERS_HISTORICOS)
     livres = [f"{n} {s}" for n in NOMES_JAEGER for s in SOBRENOMES_JAEGER
               if f"{n} {s}" not in usados]
     return choice(livres) if livres else f"{choice(NOMES_JAEGER)} {choice(SOBRENOMES_JAEGER)}"
@@ -80,3 +81,11 @@ class FabricaJaeger:
         }])["ataque"]
 
         return Jaeger(nome, 100, 100, ataque, piloto1, piloto2, geracao)
+
+    @registrar_jaeger
+    def criar_historico(self, nome) -> Jaeger:
+        """Constrói um Jaeger do filme com a tripulação original (já validada pelo hangar)."""
+        dados = JAEGERS_HISTORICOS[nome]
+        piloto1, piloto2, *piloto3 = tripulacao_original(nome)
+        return Jaeger(nome, dados["forca"], dados["durabilidade"], AtaquesJaeger[dados["ataque"]],
+                      piloto1, piloto2, dados["geracao"], *piloto3)

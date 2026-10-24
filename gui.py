@@ -6,10 +6,12 @@ só pode ser tocado pela thread principal, a campanha envia pedidos por uma fila
 e espera a resposta do jogador em outra.
 """
 import builtins
+import colorsys
 import queue
 import re
 import sys
 import threading
+import traceback
 import tkinter as tk
 from pathlib import Path
 
@@ -33,7 +35,7 @@ CORES_ANSI = {"33": "#ff9f43", "90": "#8a96a3", "91": "#ff5c5c", "92": "#5cff8f"
               "93": "#ffe066", "94": "#6cb6ff", "95": "#ff79e1", "96": "#5ce1ff"}
 ANSI = re.compile(r"\x1b\[(\d+)m")
 # A fonte da janela não tem emojis; troca pelos símbolos equivalentes que ela desenha.
-EMOJIS = str.maketrans({"🔒": "✖", "💰": "✖", "🩹": "✚", "✅": "✔", "❌": "✖", "️": ""})
+EMOJIS = str.maketrans({"🔒": "✖", "💰": "✖", "🩹": "✚", "✅": "✔", "❌": "✖", "⭐": "★", "️": ""})
 
 # Recortes (x0, y0, x1, y1) de cada quadro nas folhas de sprites de assets/.
 PASTA_ASSETS = Path(__file__).with_name("assets")
@@ -50,8 +52,12 @@ SPRITES_KAIJU = ("pixellab-Crie-um---kaiju-original-inspi-1792830676332.png", {
 QUADRO_ATAQUE = {
     "PUNHO_ENERGIZADO": "soco", "SOCO_NUCLEAR": "soco", "LAMINA_DE_PLASMA": "lamina",
     "LAMINAS_GIRATORIAS": "lamina", "RAIO_DE_ENERGIA": "raio", "PULSO_ELETRICO": "pulso",
+    "PUNHO_TESLA": "soco", "LAMINAS_STING": "lamina",
     "GARRAS": "garras", "ACIDO": "acido", "EXPLOSAO": "explosao",
 }
+# Matiz (graus) do brilho de cada variante; sem entrada = cores originais da folha.
+MATIZ_GERACAO = {2: 190, 3: 125, 4: 52, 5: 0}               # MARK_II–V
+MATIZ_CATEGORIA = {1: 125, 2: 52, 3: 28, 4: 0, 5: 285}      # Kaiju categoria I–V
 ESCALA_SPRITE = 3
 ALTURA_CENA = 320
 
@@ -98,8 +104,7 @@ class Janela:
 
         # Cena de batalha: aparece acima do texto só durante os combates.
         self.cena = tk.Canvas(principal, bg=FUNDO, height=ALTURA_CENA, highlightthickness=0)
-        self.sprites = {"jaeger": self._carregar_sprites(*SPRITES_JAEGER, espelhar=False),
-                        "kaiju": self._carregar_sprites(*SPRITES_KAIJU, espelhar=True)}
+        self._cache_sprites = {}
 
         # Área de ações: botões, campo de texto ou caixas de seleção.
         self.acoes = tk.Frame(principal, bg=PAINEL)
@@ -117,7 +122,11 @@ class Janela:
         try:
             while True:
                 funcao, args = self.tarefas.get_nowait()
-                funcao(*args)
+                try:
+                    funcao(*args)
+                except Exception:
+                    # Um erro numa tarefa não pode parar a fila, senão o jogo congela.
+                    traceback.print_exc(file=sys.__stderr__)
         except queue.Empty:
             pass
         self.raiz.after(30, self._processar_tarefas)
@@ -288,9 +297,65 @@ class Janela:
         botao.focus_set()
         self.raiz.bind("<Return>", continuar)
 
+    def mostrar_pular(self, pular):
+        """Durante as histórias: botão (ou Enter) para pular direto ao menu."""
+        self.na_tela(self._montar_pular, pular)
+
+    def esconder_pular(self):
+        self.na_tela(self._limpar_acoes)
+
+    def _montar_pular(self, pular):
+        self._limpar_acoes()
+        botao = self._botao(self.acoes, "⏭  Pular história (Enter)", pular)
+        botao.pack(fill="x", padx=12, pady=10)
+        botao.focus_set()
+        self.raiz.bind("<Return>", lambda _: pular())
+
     # === Cena de batalha ===
-    def _carregar_sprites(self, arquivo, quadros, espelhar):
+    def _sprites(self, lado, variante):
+        """Quadros do lutador na cor da variante (geração do Jaeger ou categoria do Kaiju)."""
+        if (lado, variante) not in self._cache_sprites:
+            arquivo, quadros = SPRITES_JAEGER if lado == "jaeger" else SPRITES_KAIJU
+            matiz = (MATIZ_GERACAO if lado == "jaeger" else MATIZ_CATEGORIA).get(variante)
+            self._cache_sprites[lado, variante] = self._carregar_sprites(
+                arquivo, quadros, espelhar=lado == "kaiju", matiz=matiz)
+        return self._cache_sprites[lado, variante]
+
+    @staticmethod
+    def _tingir(folha, matiz):
+        """Troca a cor dos pixels saturados (brilhos e energia) pela matiz da variante."""
+        def linhas(fundo):
+            # Pixels transparentes recebem a cor de fundo; com dois fundos dá para achá-los.
+            return [linha.split() if isinstance(linha, str) else linha
+                    for linha in folha.tk.splitlist(folha.tk.call(folha, "data", "-background", fundo))]
+
+        linhas_a, linhas_b = linhas("#ff00ff"), linhas("#00ff00")
+        tingida = tk.PhotoImage(width=folha.width(), height=folha.height())
+        tingida.tk.call(tingida, "copy", folha)
+        for y, (cores, cores_b) in enumerate(zip(linhas_a, linhas_b)):
+            trecho, inicio = [], 0
+            for x, (cor, cor_b) in enumerate(zip(cores, cores_b)):
+                nova = None
+                if cor == cor_b:
+                    h, s, v = colorsys.rgb_to_hsv(*(int(cor[i:i + 2], 16) / 255 for i in (1, 3, 5)))
+                    if s > 0.35 and v > 0.25:
+                        nova = "#%02x%02x%02x" % tuple(round(c * 255) for c in
+                                                       colorsys.hsv_to_rgb(matiz / 360, s, v))
+                if nova:
+                    if not trecho:
+                        inicio = x
+                    trecho.append(nova)
+                elif trecho:
+                    tingida.put("{" + " ".join(trecho) + "}", to=(inicio, y))
+                    trecho = []
+            if trecho:
+                tingida.put("{" + " ".join(trecho) + "}", to=(inicio, y))
+        return tingida
+
+    def _carregar_sprites(self, arquivo, quadros, espelhar, matiz=None):
         folha = tk.PhotoImage(file=str(PASTA_ASSETS / arquivo))
+        if matiz is not None:
+            folha = self._tingir(folha, matiz)
         sprites = {}
         for nome, caixa in quadros.items():
             sprite = tk.PhotoImage()
@@ -318,6 +383,8 @@ class Janela:
 
     def _montar_cena(self, jaeger, kaiju):
         self.lutadores = {"jaeger": jaeger, "kaiju": kaiju}
+        self.sprites = {"jaeger": self._sprites("jaeger", jaeger.categoria.value),
+                        "kaiju": self._sprites("kaiju", int(kaiju.categoria))}
         cena = self.cena
         cena.pack(before=self.texto, fill="x")
         cena.update_idletasks()
@@ -460,8 +527,12 @@ class Janela:
         linha(f"Dias até o fim do mundo: {dias}", DESTAQUE, True)
         linha(f"Ameaça atual: categoria {max(cronometro.obter_categoria_atual(), 1)}")
         linha(f"Dificuldade: {dificuldade.atual['nome']}")
-        if main.orcamento_atual:
-            linha(f"Créditos: ₡ {main.orcamento_atual.saldo:,}".replace(",", "."), "#5cff8f", True)
+        campanha = main.campanha_atual
+        if campanha:
+            linha(f"Créditos: ₡ {campanha.orcamento.saldo:,}".replace(",", "."), "#5cff8f", True)
+            linha(f"Próximo ataque Kaiju: {campanha.dias_ate_ataque()} dias", "#ff5c5c", True)
+            linha(f"Cidades perdidas: {campanha.cidades_perdidas}/"
+                  f"{dificuldade.atual['cidades_toleradas']}")
         y += 10
 
         linha("JAEGERS", DESTAQUE, True)
@@ -470,7 +541,7 @@ class Janela:
             linha("Nenhum construído", "#6b7c8f")
         for jaeger in jaegers:
             linha(f"{jaeger.nome} · {jaeger.categoria.name} · {jaeger.estado.name}", salto=16)
-            linha(f"Pilotos {len(jaeger.pilotos)}/2 · integridade {jaeger.saude}%", "#8a96a3",
+            linha(f"Pilotos {len(jaeger.pilotos)}/{jaeger.tripulacao_necessaria} · integridade {jaeger.saude}%", "#8a96a3",
                   salto=16)
             barra(jaeger.saude, cor_saude(jaeger.saude))
         y += 10
@@ -481,7 +552,7 @@ class Janela:
             linha("Nenhum treinado", "#6b7c8f")
         for piloto in pilotos:
             local = piloto.jaeger.nome if piloto.jaeger else "reserva"
-            linha(f"{piloto.nome} · {piloto.personalidade} · {local}", salto=16)
+            linha(f"{piloto.rotulo} · {piloto.personalidade} · {local}", salto=16)
             barra(piloto.saude, cor_saude(piloto.saude))
 
     def fechar(self):

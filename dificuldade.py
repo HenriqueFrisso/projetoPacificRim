@@ -3,9 +3,10 @@ import json
 from pathlib import Path
 
 NIVEIS = json.loads(Path(__file__).with_name("precos.json").read_text(encoding="utf-8"))["dificuldades"]
-atual = NIVEIS["normal"]
+chave = "normal"
+atual = NIVEIS[chave]
 
 
-def definir(chave):
-    global atual
-    atual = NIVEIS[chave]
+def definir(nova_chave):
+    global chave, atual
+    chave, atual = nova_chave, NIVEIS[nova_chave]

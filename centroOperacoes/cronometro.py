@@ -31,11 +31,11 @@ class Cronometro:
         else:
             return 85
 
-    def atualizar_tempo(self, dias_passados: int):
+    def atualizar_tempo(self, dias_passados: int, animar: bool = True):
         dias_anteriores = (self.data_fim - self.data_atual).days
         dias_finais = max(dias_anteriores - dias_passados, 0)
 
-        for dias in range(dias_anteriores, dias_finais - 1, -self.calcular_contagem_cronometro(dias_passados)):
+        for dias in [] if not animar else range(dias_anteriores, dias_finais - 1, -self.calcular_contagem_cronometro(dias_passados)):
             limpar_tela()
             display = f"""
             
@@ -52,7 +52,8 @@ class Cronometro:
         self.data_atual += timedelta(days=dias_passados)
         if self.data_atual > self.data_fim:
             self.data_atual = self.data_fim
-        limpar_tela()
+        if animar:
+            limpar_tela()
     
 
     def mostrar_tempo_restante(self):

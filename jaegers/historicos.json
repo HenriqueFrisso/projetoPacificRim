@@ -1,0 +1,111 @@
+{
+  "chance_na_academia": 0.1,
+  "chance_no_evento": 0.35,
+  "experiencia_inicial": 200,
+  "vinculo_inicial": 5,
+  "jaegers": {
+    "Cherno Alpha": {
+      "geracao": 1,
+      "forca": 105,
+      "durabilidade": 110,
+      "ataque": "PUNHO_TESLA",
+      "custo": 1500,
+      "descricao": "Tanque russo de primeira geração: blindagem pesada e punhos elétricos.",
+      "pilotos": [
+        {
+          "nome": "Aleksis Kaidanovsky",
+          "idade": 45,
+          "inteligencia": 91,
+          "nacionalidade": "RUS",
+          "personalidade": "DETERMINADO"
+        },
+        {
+          "nome": "Sasha Kaidanovsky",
+          "idade": 43,
+          "inteligencia": 93,
+          "nacionalidade": "RUS",
+          "personalidade": "ESTRATEGISTA"
+        }
+      ]
+    },
+    "Gipsy Danger": {
+      "geracao": 3,
+      "forca": 125,
+      "durabilidade": 125,
+      "ataque": "SOCO_NUCLEAR",
+      "custo": 3000,
+      "descricao": "O lendário Mark III americano, movido a reator nuclear.",
+      "pilotos": [
+        {
+          "nome": "Raleigh Becket",
+          "idade": 30,
+          "inteligencia": 94,
+          "nacionalidade": "USA",
+          "personalidade": "DETERMINADO"
+        },
+        {
+          "nome": "Mako Mori",
+          "idade": 25,
+          "inteligencia": 97,
+          "nacionalidade": "JPN",
+          "personalidade": "CALMO"
+        }
+      ]
+    },
+    "Crimson Typhoon": {
+      "geracao": 4,
+      "forca": 115,
+      "durabilidade": 100,
+      "ataque": "LAMINAS_GIRATORIAS",
+      "custo": 4000,
+      "descricao": "O Jaeger chinês de três braços, pilotado pelos trigêmeos Wei.",
+      "pilotos": [
+        {
+          "nome": "Cheung Wei",
+          "idade": 31,
+          "inteligencia": 93,
+          "nacionalidade": "CHN",
+          "personalidade": "TECNICO"
+        },
+        {
+          "nome": "Hu Wei",
+          "idade": 31,
+          "inteligencia": 93,
+          "nacionalidade": "CHN",
+          "personalidade": "TECNICO"
+        },
+        {
+          "nome": "Jin Wei",
+          "idade": 31,
+          "inteligencia": 93,
+          "nacionalidade": "CHN",
+          "personalidade": "TECNICO"
+        }
+      ]
+    },
+    "Striker Eureka": {
+      "geracao": 5,
+      "forca": 110,
+      "durabilidade": 110,
+      "ataque": "LAMINAS_STING",
+      "custo": 5000,
+      "descricao": "O primeiro e único Mark V: o Jaeger mais rápido e forte da guerra.",
+      "pilotos": [
+        {
+          "nome": "Herc Hansen",
+          "idade": 47,
+          "inteligencia": 95,
+          "nacionalidade": "AUS",
+          "personalidade": "LIDER"
+        },
+        {
+          "nome": "Chuck Hansen",
+          "idade": 21,
+          "inteligencia": 92,
+          "nacionalidade": "AUS",
+          "personalidade": "IMPULSIVO"
+        }
+      ]
+    }
+  }
+}
