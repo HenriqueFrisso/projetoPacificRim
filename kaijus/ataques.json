@@ -1,0 +1,32 @@
+{
+  "GARRAS": {
+    "nome": "Garras Cortantes",
+    "dano_min": 7,
+    "dano_max": 12,
+    "forca_peso": 0.6,
+    "agressividade_peso": 0.4,
+    "prob_divisor": 110.0,
+    "mensagem_sucesso": "dilacera {alvo}({alvo.saude}) com suas Garras!",
+    "mensagem_falha": "tenta dilacerar {alvo}({alvo.saude}), mas erra o ataque!"
+  },
+  "ACIDO": {
+    "nome": "Cuspe Ácido",
+    "dano_min": 14,
+    "dano_max": 22,
+    "forca_peso": 0.5,
+    "agressividade_peso": 0.5,
+    "prob_divisor": 140.0,
+    "mensagem_sucesso": "cospe um jato de ÁCIDO corrosivo em {alvo}({alvo.saude})!",
+    "mensagem_falha": "tenta cuspir ÁCIDO em {alvo}({alvo.saude}), mas erra o alvo!"
+  },
+  "EXPLOSAO": {
+    "nome": "Explosão Interna",
+    "dano_min": 18,
+    "dano_max": 28,
+    "forca_peso": 0.5,
+    "agressividade_peso": 0.6,
+    "prob_divisor": 165.0,
+    "mensagem_sucesso": "provoca uma EXPLOSÃO devastadora dentro de {alvo}({alvo.saude})!",
+    "mensagem_falha": "tenta causar uma EXPLOSÃO interna em {alvo}({alvo.saude}), mas falha!"
+  }
+}

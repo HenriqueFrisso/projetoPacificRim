@@ -2,6 +2,7 @@ from kaijus.kaijusBase import kaijusBase
 from kaijus.categorias import estrategias_kaiju
 from kaijus.ataques import ataques_kaiju
 from util import registrar_kaiju_derrotado
+import dificuldade
 
 
 
@@ -80,6 +81,7 @@ class Kaiju:
         alvo.atacado(dano)
 
     def atacado(self, dano):
+        dano *= dificuldade.atual["dano_recebido_kaiju"]
         dano_total = int(dano / (self._durabilidade / 100))
         print(f"Dano: {dano_total}")
         self.saude -= dano_total

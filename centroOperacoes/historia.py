@@ -54,7 +54,7 @@ A humanidade teve sua primeira vitória.
 Nós havíamos conseguido... e nos acostumamos a vencer.
         """)
 
-    inquirer.select(
+    return inquirer.select(
         message="",
         choices=["Continuar"],
         default="Continuar",
@@ -135,7 +135,7 @@ Jaegers não eram apenas máquinas.
 Eram símbolos do que podemos ser quando lutamos juntos.
         """)
 
-    inquirer.select(
+    return inquirer.select(
         message="Fim da jornada. O que deseja fazer?",
         choices=["Reiniciar história", "Sair"],
         default="Sair",
@@ -218,7 +218,7 @@ Alguém que ainda sonha com o dia em que lutaremos de novo.
 E venceremos.
         """)
 
-    inquirer.select(
+    return inquirer.select(
         message="Fim da humanidade. O que deseja fazer?",
         choices=["Reiniciar história", "Sair"],
         default="Sair",
@@ -263,7 +263,7 @@ Mas nas sombras, alguns ainda acreditavam.
 Alguns sabiam... que os Kaijus voltariam.
     """)
 
-    inquirer.select(
+    return inquirer.select(
         message="O Programa Jaeger foi encerrado. O que deseja fazer?",
         choices=["Continuar", "Sair"],
         default="Continuar",
@@ -312,7 +312,7 @@ Enquanto existisse um piloto disposto a lutar,
 a humanidade ainda teria chance.
     """)
 
-    inquirer.select(
+    return inquirer.select(
         message="Os Jaegers foram reativados. O que deseja fazer?",
         choices=["Continuar", "Sair"],
         default="Continuar",

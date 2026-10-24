@@ -56,7 +56,6 @@ class Cronometro:
     
 
     def mostrar_tempo_restante(self):
-        limpar_tela()
         restante = self.data_fim - self.data_atual
         dias = restante.days
         semanas = dias // 7
@@ -68,6 +67,14 @@ class Cronometro:
         print(f"- Semanas: {semanas}")
         print(f"- Meses: {meses}")
         print(f"- Anos: {anos}")
+
+    def data_liberacao(self, categoria):
+        """Data em que a guerra entra na fase da categoria (cada fase = 20% do tempo)."""
+        total_dias = (self.data_fim - self.data_inicio).days
+        if categoria <= 1:
+            return self.data_inicio
+        # obter_categoria_atual só troca de fase depois de ultrapassar o limite.
+        return self.data_inicio + timedelta(days=int(total_dias * 0.2 * (categoria - 1)) + 1)
 
     def obter_categoria_atual(self):
         total_dias = (self.data_fim - self.data_inicio).days

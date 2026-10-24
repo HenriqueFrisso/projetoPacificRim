@@ -1,0 +1,60 @@
+{
+  "creditos_iniciais": 9000,
+  "treinamento": {
+    "selecao": 250,
+    "conclusao": 250
+  },
+  "jaeger": 5000,
+  "reparo_por_integridade": 25,
+  "penalidade_derrota": 2000,
+  "recompensa_por_categoria_kaiju": 1750,
+  "intervalo_entre_golpes_segundos": 0.6,
+  "dificuldades": {
+    "facil": {
+      "nome": "Fácil",
+      "creditos": 1.5,
+      "precos": 0.75,
+      "recompensa": 1.5,
+      "dano_recebido_jaeger": 0.75,
+      "dano_recebido_kaiju": 1.25,
+      "chance_treinamento": 0.95,
+      "inteligencia_candidatos": [
+        70,
+        100
+      ]
+    },
+    "normal": {
+      "nome": "Normal",
+      "creditos": 1.0,
+      "precos": 1.0,
+      "recompensa": 1.0,
+      "dano_recebido_jaeger": 1.0,
+      "dano_recebido_kaiju": 1.0,
+      "chance_treinamento": 0.8,
+      "inteligencia_candidatos": [
+        60,
+        100
+      ]
+    },
+    "dificil": {
+      "nome": "Difícil",
+      "creditos": 0.9,
+      "precos": 1.15,
+      "recompensa": 0.75,
+      "dano_recebido_jaeger": 1.25,
+      "dano_recebido_kaiju": 0.85,
+      "chance_treinamento": 0.6,
+      "inteligencia_candidatos": [
+        50,
+        90
+      ]
+    }
+  },
+  "geracao_jaeger": {
+    "MARK_I": 0,
+    "MARK_II": 1000,
+    "MARK_III": 2000,
+    "MARK_IV": 3500,
+    "MARK_V": 5000
+  }
+}

@@ -1,4 +1,5 @@
 from util import *
+import dificuldade
 from jaegers.ataques import AtaquesJaeger, ataques_jaeger
 from jaegers.categorias import estrategias_jaeger, CategoriaJaeger
 from pilotos.piloto import Piloto
@@ -131,6 +132,40 @@ class Jaeger:
         self._inteligencia = calcular_conexao(piloto1, piloto2)
         self._estado = EstadoJaeger.ATIVO
 
+    def remover_piloto(self, piloto):
+        """Remove um membro da tripulação e deixa o Jaeger indisponível."""
+        if piloto not in self._pilotos:
+            return False
+
+        piloto.jaeger = None
+        self._pilotos.remove(piloto)
+        if self._piloto1 is piloto:
+            self._piloto1 = None
+        elif self._piloto2 is piloto:
+            self._piloto2 = None
+
+        # Uma ponte neural exige a dupla completa; sem ela o Jaeger não opera.
+        self._inteligencia = 0
+        self._estado = EstadoJaeger.INATIVO
+        return True
+
+    def adicionar_piloto(self, piloto):
+        """Aloca um substituto; o Jaeger só volta a operar com dois pilotos."""
+        if self.saude <= 0 or piloto.jaeger is not None or len(self._pilotos) >= 2:
+            return False
+
+        self._pilotos.append(piloto)
+        piloto.jaeger = self
+        if self._piloto1 is None:
+            self._piloto1 = piloto
+        else:
+            self._piloto2 = piloto
+
+        if len(self._pilotos) == 2:
+            self._inteligencia = calcular_conexao(self._piloto1, self._piloto2)
+            self._estado = EstadoJaeger.ATIVO if self.saude == 100 else EstadoJaeger.DANIFICADO
+        return True
+
     # === Métodos de combate ===
     def atacar(self, alvo):
         _, ataque_func = ataques_jaeger[self._ataque_assinatura]
@@ -138,6 +173,7 @@ class Jaeger:
         alvo.atacado(dano)
 
     def atacado(self, dano):
+        dano *= dificuldade.atual["dano_recebido_jaeger"]
         dano_total = int(dano / (self._durabilidade / 100))
         print(f"Dano: {dano_total}")
         self.saude -= dano_total
@@ -146,6 +182,9 @@ class Jaeger:
     def info(self):
         cor = cores.get(self._categoria.name, "\033[0m")
         reset = "\033[0m"
+        pilotos = ", ".join(
+            f"{piloto.nome} ({piloto.nacionalidade})" for piloto in self._pilotos
+        ) or "Nenhum"
 
         return (
             f"============================================\n"
@@ -156,7 +195,7 @@ class Jaeger:
             f"  Inteligência: {self._inteligencia}\n"
             f"  Ataque assinatura: {self._ataque_assinatura.name}\n"
             f"  Saude atual: {self._saude}\n"
-            f"  Pilotos: {self._piloto1}, {self._piloto2}\n"
+            f"  Pilotos: {pilotos}\n"
             f"  Estado: {self._estado.name}\n"
             f"============================================\n"
         )
@@ -218,6 +257,9 @@ class CrimsonTyphoon(Jaeger):
     def info(self):
         cor = cores.get(self._categoria.name, "\033[0m")
         reset = "\033[0m"
+        pilotos = ", ".join(
+            f"{piloto.nome} ({piloto.nacionalidade})" for piloto in self._pilotos
+        ) or "Nenhum"
 
         return (
             f"Jaeger: {cor}{self._nome}{reset}\n"
@@ -227,6 +269,6 @@ class CrimsonTyphoon(Jaeger):
             f"Inteligência: {self._inteligencia}\n"
             f"Ataque assinatura: {self._ataque_assinatura.name}\n"
             f"Saude atual: {self._saude}\n"
-            f"Pilotos: {self._piloto1}, {self._piloto2}, {self._piloto3}\n"
+            f"Pilotos: {pilotos}\n"
             f"Estado: {self._estado.name}"
         )

@@ -73,6 +73,20 @@ class Personalidade(Enum):
     def __str__(self):
         return self.name.capitalize()
 
+RECUPERACAO_BASE_POR_DIA = 0.4  # pontos de saúde por dia
+
+# Temperamento influencia o repouso: os calmos se recuperam melhor que os impulsivos.
+RECUPERACAO_POR_PERSONALIDADE = {
+    Personalidade.CALMO: 1.5,
+    Personalidade.DETERMINADO: 1.3,
+    Personalidade.ESTRATEGISTA: 1.2,
+    Personalidade.TECNICO: 1.1,
+    Personalidade.LIDER: 1.0,
+    Personalidade.IMPULSIVO: 0.7,
+    Personalidade.REBELDE: 0.6,
+}
+
+
 class EstadoPiloto(Enum):
     ATIVO = 0
     FERIDO = 1
@@ -150,8 +164,15 @@ class Piloto:
         else:
             self.estado = EstadoPiloto.FERIDO
 
-        
-        
+    def recuperar(self, dias):
+        """Cura feridos com o passar dos dias; retorna os pontos recuperados."""
+        if not 0 < self.__saude < 100:  # saudável ou fora de combate (saúde 0)
+            return 0
+        taxa = RECUPERACAO_POR_PERSONALIDADE.get(self.__personalidade, 1.0)
+        pontos = min(round(dias * RECUPERACAO_BASE_POR_DIA * taxa), 100 - self.__saude)
+        self.saude = self.__saude + pontos
+        return pontos
+
 
     @property
     def jaeger(self):
@@ -173,6 +194,7 @@ class Piloto:
             f"Personalidade: {self.__personalidade or 'N/A'}\n"
             f"Estado: {self.__estado}\n"
             f"Saúde: {self.__saude}\n"
+            f"Recuperação: x{RECUPERACAO_POR_PERSONALIDADE.get(self.__personalidade, 1.0)}\n"
             f"Jaeger: {jaeger_nome}"
         )
 
@@ -192,27 +214,26 @@ def selecionar_pilotos(i):
         print(f"Não há pilotos suficientes para criar um Jaeger (mínimo: {i}).")
         return None
 
-    # Cria opções de escolha com inteligência ajustada, estado e personalidade
+    # Os atributos relevantes ficam na própria opção, sem telas extras.
     opcoes_pilotos = []
-    for idx, p in enumerate(pilotos_disponiveis):
+    for p in pilotos_disponiveis:
         inteligencia_efetiva = p.inteligencia
         if p.estado == EstadoPiloto.FERIDO:
             inteligencia_efetiva = round(p.inteligencia * (p.saude / 100), 2)
         
         opcoes_pilotos.append({
             "name": (
-                f"{idx}. {p.nome} ({p.nacionalidade})\n"
-                f"   Estado: {p.estado.name} | Inteligência: {inteligencia_efetiva} | "
-                f"Personalidade: {p.personalidade or 'N/A'}"
+                f"{p.nome} ({p.nacionalidade}) | INT {inteligencia_efetiva} | "
+                f"{p.personalidade} | {p.estado.name} | Saúde {p.saude}%"
             ),
-            "value": idx
+            "value": p
         })
 
     pergunta_checkbox = [
         {
             "type": "checkbox",
             "name": "pilotos",
-            "message": f"Selecione {i} pilotos:",
+            "message": f"Selecione exatamente {i} piloto(s) e confirme:",
             "choices": opcoes_pilotos
         }
     ]
@@ -226,5 +247,4 @@ def selecionar_pilotos(i):
             continue
         break
 
-    pilotos_selecionados = [pilotos_disponiveis[idx] for idx in selecionados]
-    return pilotos_selecionados
+    return selecionados

@@ -1,4 +1,5 @@
 from util import *
+import dificuldade
 from pilotos.piloto import Piloto, EstadoPiloto, Nacionalidade, Personalidade
 
 
@@ -9,7 +10,11 @@ class FabricaPilotos:
         p1 = self.__criar_piloto_aleatorio()
         p2 = self.__criar_piloto_aleatorio()
         p3 = self.__criar_piloto_aleatorio()
-        return self.__escolher_piloto(p1,p2,p3)
+        piloto = self.__escolher_piloto(p1,p2,p3)
+        if piloto and random() > dificuldade.atual["chance_treinamento"]:
+            print(f"⚠️  {piloto.nome} não suportou a ponte neural e foi reprovado no treinamento.")
+            return None
+        return piloto
 
 
     def __criar_piloto_aleatorio(self):
@@ -75,7 +80,7 @@ class FabricaPilotos:
         nome_completo = f"{nome} {sobrenome}"
 
         idade = randint(20, 40)
-        inteligencia = randint(60, 100)
+        inteligencia = randint(*dificuldade.atual["inteligencia_candidatos"])
         personalidade = choice(list(Personalidade))
         estado = EstadoPiloto.ATIVO
 
@@ -90,34 +95,24 @@ class FabricaPilotos:
 
 
     def __escolher_piloto(self, *pilotos):
-        while True:
-            escolhas = [piloto.nome for piloto in pilotos] + [Separator(), "Confirmar escolha", "Cancelar"]
-            escolha = inquirer.select(
-                message="Selecione um piloto para visualizar ou confirmar sua escolha:",
-                choices=escolhas,
-                default=pilotos[0].nome,
-            ).execute()
-
-            if escolha == "Confirmar escolha":
-                while True:
-                    sub_escolha = inquirer.select(
-                        message="Escolha qual piloto deseja confirmar:",
-                        choices=[piloto.nome for piloto in pilotos] + [Separator(), "🔙 Voltar"]
-                    ).execute()
-
-                    if sub_escolha == "🔙 Voltar":
-                        break
-                    else:
-                        piloto_confirmado = next(p for p in pilotos if p.nome == sub_escolha)
-                        print(f"\n✅ Piloto '{piloto_confirmado.nome}' selecionado!")
-                        return piloto_confirmado
-
-            elif escolha == "Cancelar":
-                print("❌ Cancelado.")
-                return None
-
-            else:
-                piloto = next(p for p in pilotos if p.nome == escolha)
-                print(f"\n=== Informações de {piloto.nome} ===")
-                print(piloto.info())
-                input("\nPressione Enter para continuar...")
+        opcoes = [
+            {
+                "name": (f"{piloto.nome} ({piloto.nacionalidade}) | "
+                         f"INT {piloto.inteligencia} | {piloto.personalidade}"),
+                "value": piloto,
+            }
+            for piloto in pilotos
+        ]
+        opcoes.append({"name": "Cancelar recrutamento", "value": None})
+        resposta = prompt([{
+            "type": "list",
+            "name": "piloto",
+            "message": "Escolha um candidato:",
+            "choices": opcoes,
+        }])
+        piloto_confirmado = resposta["piloto"]
+        if piloto_confirmado:
+            print(f"\n✅ Piloto '{piloto_confirmado.nome}' selecionado!")
+        else:
+            print("❌ Recrutamento cancelado.")
+        return piloto_confirmado

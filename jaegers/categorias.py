@@ -26,3 +26,23 @@ estrategias_jaeger = {
     CategoriaJaeger.MARK_IV: estrategia_mark_iv,
     CategoriaJaeger.MARK_V: estrategia_mark_v,
 }
+
+import json
+from pathlib import Path
+import dificuldade
+
+# Custo extra de cada geração na construção, editável em precos.json.
+CUSTO_GERACAO = json.loads(Path(__file__).parent.parent.joinpath("precos.json")
+                           .read_text(encoding="utf-8"))["geracao_jaeger"]
+
+
+def custo_geracao(geracao: CategoriaJaeger):
+    return round(CUSTO_GERACAO[geracao.name] * dificuldade.atual["precos"])
+
+
+def descrever_geracao(geracao: CategoriaJaeger):
+    # Jaeger base tem 100/100; a estratégia da geração soma os bônus.
+    class _Base: _forca = _durabilidade = 100
+    forca, durabilidade = estrategias_jaeger[geracao](_Base)
+    custo = f"{custo_geracao(geracao):,}".replace(",", ".")
+    return f"{geracao.name} | força {forca} | durabilidade {durabilidade} | +₡ {custo}"

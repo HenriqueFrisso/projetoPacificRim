@@ -1,0 +1,26 @@
+{
+  "personalidade": {
+    "rebelde": 4,
+    "mesma_personalidade": 16,
+    "referencia_diferenca": 15,
+    "pares_compativeis": {
+      "ESTRATEGISTA|LIDER": 26,
+      "LIDER|TECNICO": 24,
+      "CALMO|LIDER": 22,
+      "ESTRATEGISTA|TECNICO": 22,
+      "DETERMINADO|ESTRATEGISTA": 20,
+      "CALMO|IMPULSIVO": 18
+    }
+  },
+  "nacionalidade": {
+    "distancia_maxima": 20,
+    "multiplicador": 1.2
+  },
+  "inteligencia": {
+    "divisor_media": 200,
+    "escala": 80
+  },
+  "estado": {
+    "multiplicador_por_piloto_nao_ativo": 0.75
+  }
+}

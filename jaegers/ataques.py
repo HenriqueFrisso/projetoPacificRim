@@ -1,4 +1,8 @@
+import json
+from pathlib import Path
+
 from util import *
+import dificuldade
 
 # === Enum de Ataques Jaeger ===
 class AtaquesJaeger(Enum):
@@ -9,45 +13,34 @@ class AtaquesJaeger(Enum):
     RAIO_DE_ENERGIA = auto()
     PULSO_ELETRICO = auto()
 
-# === Dicionário de atributos de ataques Jaeger ===
-atributos_ataques_jaeger = {
-    AtaquesJaeger.PUNHO_ENERGIZADO: {
-        "dano_min": 12,
-        "dano_max": 18,
-        "prob_base": 1.2,
-        "bonus": 0.0
-    },
-    AtaquesJaeger.LAMINA_DE_PLASMA: {
-        "dano_min": 20,
-        "dano_max": 30,
-        "prob_base": 1.0,
-        "bonus": 0.0
-    },
-    AtaquesJaeger.RAIO_DE_ENERGIA: {
-        "dano_min": 25,
-        "dano_max": 32,
-        "prob_base": 0.85,
-        "bonus": 0.0
-    },
-    AtaquesJaeger.PULSO_ELETRICO: {
-        "dano_min": 28,
-        "dano_max": 35,
-        "prob_base": 0.8,
-        "bonus": 0.0
-    },
-    AtaquesJaeger.SOCO_NUCLEAR: {
-        "dano_min": 35,
-        "dano_max": 50,
-        "prob_base": 0.75,
-        "bonus": 0.2
-    },
-    AtaquesJaeger.LAMINAS_GIRATORIAS: {
-        "dano_min": 28,
-        "dano_max": 62,
-        "prob_base": 0.9,
-        "bonus": 0.2
+ARQUIVO_ATAQUES = Path(__file__).with_name("ataques.json")
+
+
+def carregar_atributos_ataques():
+    """Carrega a tabela editável de ataques Jaeger."""
+    with ARQUIVO_ATAQUES.open(encoding="utf-8") as arquivo:
+        configuracao = json.load(arquivo)
+    return {
+        AtaquesJaeger[nome]: atributos
+        for nome, atributos in configuracao.items()
     }
-}
+
+
+atributos_ataques_jaeger = carregar_atributos_ataques()
+
+
+def custo_arma(tipo: AtaquesJaeger):
+    """Custo extra da arma na construção, ajustado pela dificuldade."""
+    return round(atributos_ataques_jaeger[tipo].get("custo", 0) * dificuldade.atual["precos"])
+
+
+def descrever_arma(tipo: AtaquesJaeger):
+    atb = atributos_ataques_jaeger[tipo]
+    # Precisão com ponte neural de 70; a força do Jaeger multiplica o dano.
+    precisao = min(atb["prob_base"] + atb["bonus"], 1.0)
+    custo = f"{custo_arma(tipo):,}".replace(",", ".")
+    return (f"{atb['nome']} | dano {atb['dano_min']}–{atb['dano_max']} | "
+            f"precisão {precisao:.0%} | +₡ {custo} — {atb['descricao']}")
 
 # === Função de ataque Jaeger ===
 def executar_ataque(tipo: AtaquesJaeger, forca, inteligencia, atacante, alvo):
@@ -65,12 +58,15 @@ def executar_ataque(tipo: AtaquesJaeger, forca, inteligencia, atacante, alvo):
         print(f"{atacante}({atacante.saude}) tenta usar {nome_ataque} em {alvo}({alvo.saude}), mas falha!", end=" ")
         return 0
     
-# === Dicionário de ataques Jaeger ===
-ataques_jaeger = {
-    AtaquesJaeger.PUNHO_ENERGIZADO: ("Punho Energizado", lambda f, i, a, al: executar_ataque(AtaquesJaeger.PUNHO_ENERGIZADO, f, i, a, al)),
-    AtaquesJaeger.LAMINA_DE_PLASMA: ("Lâmina de Plasma", lambda f, i, a, al: executar_ataque(AtaquesJaeger.LAMINA_DE_PLASMA, f, i, a, al)),
-    AtaquesJaeger.RAIO_DE_ENERGIA: ("Raio de Energia", lambda f, i, a, al: executar_ataque(AtaquesJaeger.RAIO_DE_ENERGIA, f, i, a, al)),
-    AtaquesJaeger.PULSO_ELETRICO: ("Pulso Elétrico", lambda f, i, a, al: executar_ataque(AtaquesJaeger.PULSO_ELETRICO, f, i, a, al)),
-    AtaquesJaeger.SOCO_NUCLEAR: ("Soco Nuclear", lambda f, i, a, al: executar_ataque(AtaquesJaeger.SOCO_NUCLEAR, f, i, a, al)),
-    AtaquesJaeger.LAMINAS_GIRATORIAS: ("Lâminas Giratórias", lambda f, i, a, al: executar_ataque(AtaquesJaeger.LAMINAS_GIRATORIAS, f, i, a, al))
-}
+def criar_ataques_jaeger():
+    return {
+        tipo: (
+            atributos["nome"],
+            lambda forca, inteligencia, atacante, alvo, tipo=tipo:
+            executar_ataque(tipo, forca, inteligencia, atacante, alvo),
+        )
+        for tipo, atributos in atributos_ataques_jaeger.items()
+    }
+
+
+ataques_jaeger = criar_ataques_jaeger()
